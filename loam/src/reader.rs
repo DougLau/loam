@@ -2,8 +2,7 @@
 //
 // Copyright (c) 2021  Douglas P Lau
 //
-use crate::error::{Error, Result};
-use crate::Id;
+use crate::common::{Error, Id, Result};
 use bincode::Options;
 use memmap2::Mmap;
 use serde::Deserialize;
