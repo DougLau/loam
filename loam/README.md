@@ -2,7 +2,7 @@
 
 A Rust library for storing tree-like data structures to files.  The intended
 use-case is for querying data which does not fit into RAM.  The motivating
-project, `rockoak`, uses GeoSpatial data in an [RTree].
+project, `rosewood`, uses GeoSpatial data in an [RTree].
 
 `Loam` allows you to store anything which implements `Serialize`, and gives you
 an __Id__ to retrive it later.
