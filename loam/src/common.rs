@@ -1,4 +1,4 @@
-// error.rs     Errors
+// common.rs    Common stuff
 //
 // Copyright (c) 2021  Douglas P Lau
 //
@@ -34,7 +34,7 @@ pub enum Error {
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// Identifier for data chunks
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub struct Id(NonZeroU64);
 
 impl Id {
@@ -49,7 +49,7 @@ impl Id {
     pub(crate) fn to_le_bytes(self) -> [u8; 8] {
         self.0.get().to_le_bytes()
     }
-    pub(crate) fn as_usize(self) -> usize {
+    pub(crate) fn to_usize(self) -> usize {
         self.0.get() as usize
     }
 }

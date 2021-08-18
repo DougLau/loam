@@ -47,7 +47,7 @@ impl Reader {
 
     /// Lookup data for the given `Id`
     pub fn lookup<'de, D: Deserialize<'de>>(&'de self, id: Id) -> Result<D> {
-        let base = id.as_usize();
+        let base = id.to_usize();
         if self.len >= HEADER_SZ + CHECKPOINT_SZ
             && base >= HEADER_SZ
             && base < self.len

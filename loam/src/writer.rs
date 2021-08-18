@@ -37,8 +37,8 @@ impl Writer {
     /// # Returns
     /// `Id` to read back the data.
     pub fn push<D: Serialize>(&mut self, data: &D) -> Result<Id> {
-        let id = Id::new(self.file.metadata()?.len())
-            .ok_or(Error::InvalidHeader)?;
+        let len = self.file.metadata()?.len();
+        let id = Id::new(len).ok_or(Error::InvalidHeader)?;
         let options = bincode::DefaultOptions::new();
         let len = options.serialized_size(data)? as usize;
         let lenlen = options.serialized_size(&len)? as usize;
