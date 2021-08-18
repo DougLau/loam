@@ -6,8 +6,20 @@ pub enum Error {
     Io(#[from] std::io::Error),
 
     /// Bincode error
-    #[error("bincode {0}")]
+    #[error("Bincode {0}")]
     Bincode(#[from] Box<bincode::ErrorKind>),
+
+    /// Invalid header
+    #[error("Invalid Header")]
+    InvalidHeader,
+
+    /// Missing checkpoint
+    #[error("Missing Checkpoint")]
+    MissingCheckpoint,
+
+    /// Invalid ID
+    #[error("Invalid ID")]
+    InvalidId,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

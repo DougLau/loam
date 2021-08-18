@@ -2,7 +2,7 @@
 
 A Rust library for storing tree-like data structures to files.  The intended
 use-case is for querying data which does not fit into RAM.  The motivating
-project uses GeoSpatial data in an [RTree].
+project, `rockoak`, uses GeoSpatial data in an [RTree].
 
 `Loam` allows you to store anything which implements `Serialize`, and gives you
 an __id__ to retrive it later.
@@ -17,9 +17,7 @@ an __id__ to retrive it later.
 
 - Open file for reading
 - Lookup root / index Chunk (from last checkpoint)
-- struct Chunk has an __id__ item (file offset)
 - Lookup a Chunk by __id__ (no borrowed data)
-- View a Chunk by __id__ (lifetime bound to loam file)
 - Verify checksums for all chunks
 
 ## File Format
