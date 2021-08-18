@@ -5,20 +5,30 @@ use-case is for querying data which does not fit into RAM.  The motivating
 project, `rockoak`, uses GeoSpatial data in an [RTree].
 
 `Loam` allows you to store anything which implements `Serialize`, and gives you
-an __id__ to retrive it later.
+an __Id__ to retrive it later.
 
-## Write API
+## Write Example
 
-- Open file in append mode
-- Push data where D: Serialize (returning its __id__)
-- Checkpoint
+```
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut writer = loam::Writer::new("../target/test.loam")?;
+    let id = writer.push(&"Something to serialize")?;
+    writer.checkpoint(id)?;
+    Ok(())
+}
+```
 
-## Read API
+## Read Example
 
-- Open file for reading
-- Lookup root / index Chunk (from last checkpoint)
-- Lookup a Chunk by __id__ (no borrowed data)
-- Verify checksums for all chunks
+```
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let reader = loam::Reader::new("../target/test.loam")?;
+    let id = reader.root()?;
+    let msg: String = reader.lookup(id)?;
+    dbg!(msg);
+    Ok(())
+}
+```
 
 ## File Format
 
@@ -48,11 +58,11 @@ Length   | Number of bytes in *Data* (variable-size integer)
 Data     | Chunk data (variable-size integer)
 Checksum | CRC-32 of *Length* + *Data* (fixed-size integer)
 
-The file offset of a chunk is its __id__.  These can be used by chunks to
+The file offset of a chunk is its __Id__.  These can be used by chunks to
 reference data in other chunks.
 
 A checkpoint is a special chunk containing a fixed-size `u64` of the root
-__id__.  A `loam` file must always end with a checkpoint, to allow readers to
+__Id__.  A `loam` file must always end with a checkpoint, to allow readers to
 lookup the root without needing to scan the entire file.
 
 
