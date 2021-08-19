@@ -33,7 +33,7 @@ pub enum Error {
 /// Result for reading or writing loam files
 pub type Result<T> = std::result::Result<T, Error>;
 
-/// Identifier for data chunks
+/// Chunk Identifier
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub struct Id(NonZeroU64);
 

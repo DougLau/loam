@@ -10,7 +10,7 @@ use std::fs::{File, OpenOptions};
 use std::io::Write;
 use std::path::Path;
 
-/// Writer for `loam` files
+/// Writer for __loam__ files
 ///
 /// The writer can be used to create or append to an existing file.
 pub struct Writer {
@@ -32,10 +32,10 @@ impl Writer {
         Ok(Writer { file })
     }
 
-    /// Push data to the file.  The data is written to the end of the file.
+    /// Push a chunk of data to the end of the file.
     ///
     /// # Returns
-    /// `Id` to read back the data.
+    /// `Id` chunk identifier
     pub fn push<D: Serialize>(&mut self, data: &D) -> Result<Id> {
         let len = self.file.metadata()?.len();
         let id = Id::new(len).ok_or(Error::InvalidHeader)?;
@@ -55,8 +55,10 @@ impl Writer {
         Ok(id)
     }
 
-    /// Add a checkpoint to the file.  This must be the final chunk in a `loam`
-    /// file.  The `Id` commonly points to the root of a tree of nodes.
+    /// Add a checkpoint to the file.  The `Id` commonly points to the root of a
+    /// tree of nodes.
+    ///
+    /// In order to be read back, a file must end with a checkpoint.
     pub fn checkpoint(&mut self, id: Id) -> Result<()> {
         self.push(&id.to_le_bytes())?;
         self.file.sync_data()?;
