@@ -4,7 +4,6 @@
 //
 use serde::{Deserialize, Serialize};
 use std::fmt;
-use std::num::NonZeroU64;
 
 /// Errors for reading or writing loam files
 #[derive(Debug, thiserror::Error)]
@@ -37,9 +36,12 @@ pub enum Error {
 /// Result for reading or writing loam files
 pub type Result<T> = std::result::Result<T, Error>;
 
+/// File header
+pub const HEADER: &[u8; 8] = b"loam0000";
+
 /// Chunk Identifier
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
-pub struct Id(NonZeroU64);
+pub struct Id(u64);
 
 impl fmt::Display for Id {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -48,17 +50,30 @@ impl fmt::Display for Id {
 }
 
 impl Id {
-    pub(crate) fn new(id: u64) -> Option<Self> {
-        NonZeroU64::new(id).map(Id)
+    /// Create a new Id
+    pub fn new(id: u64) -> Self {
+        Id(id)
     }
-    pub(crate) fn from_le_bytes(bytes: [u8; 8]) -> Option<Self> {
-        Self::new(u64::from_le_bytes(bytes))
+
+    /// Check if Id is valid
+    pub fn is_valid(self) -> bool {
+        self.0 > 0
     }
+
+    pub(crate) fn from_le_bytes(bytes: [u8; 8]) -> Self {
+        Id(u64::from_le_bytes(bytes))
+    }
+
     pub(crate) fn to_le_bytes(self) -> [u8; 8] {
-        self.0.get().to_le_bytes()
+        self.0.to_le_bytes()
     }
+
+    pub(crate) fn from_usize(id: usize) -> Self {
+        Id(id as u64)
+    }
+
     pub(crate) fn to_usize(self) -> usize {
-        self.0.get() as usize
+        self.0 as usize
     }
 }
 

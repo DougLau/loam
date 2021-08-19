@@ -2,7 +2,7 @@
 //
 // Copyright (c) 2021  Douglas P Lau
 //
-use crate::common::{checksum, Error, Id, Result, CRC_SZ};
+use crate::common::{checksum, Error, Id, Result, CRC_SZ, HEADER};
 use bincode::Options;
 use serde::Serialize;
 use std::fs::{File, OpenOptions};
@@ -26,7 +26,7 @@ impl Writer {
             return Err(Error::InvalidHeader);
         }
         if len == 0 {
-            file.write_all(b"loam0000")?;
+            file.write_all(HEADER)?;
         }
         Ok(Writer { file })
     }
@@ -37,7 +37,7 @@ impl Writer {
     /// `Id` chunk identifier
     pub fn push<D: Serialize>(&mut self, data: &D) -> Result<Id> {
         let len = self.file.metadata()?.len();
-        let id = Id::new(len).ok_or(Error::InvalidHeader)?;
+        let id = Id::new(len);
         let options = bincode::DefaultOptions::new();
         let len = options.serialized_size(data)? as usize;
         let lenlen = options.serialized_size(&len)? as usize;

@@ -2,7 +2,7 @@
 //
 // Copyright (c) 2021  Douglas P Lau
 //
-use crate::common::{Error, Id, Result, CRC_SZ};
+use crate::common::{Error, Id, Result, CRC_SZ, HEADER};
 use bincode::Options;
 use memmap2::Mmap;
 use serde::Deserialize;
@@ -17,9 +17,6 @@ pub struct Reader {
     /// Length of memory map
     len: usize,
 }
-
-/// File header
-const HEADER: &[u8; 8] = b"loam0000";
 
 /// Size of checkpoint chunk in bytes
 const CHECKPOINT_SZ: usize = 9 + CRC_SZ;
@@ -44,12 +41,9 @@ impl Reader {
     pub fn root(&self) -> Result<Id> {
         if self.len >= HEADER.len() + CHECKPOINT_SZ {
             let base = self.len - CHECKPOINT_SZ;
-            if let Some(cid) = Id::new(base as u64) {
-                let bytes: [u8; 8] = self.lookup(cid)?;
-                if let Some(id) = Id::from_le_bytes(bytes) {
-                    return Ok(id);
-                }
-            }
+            let id = Id::from_usize(base);
+            let bytes: [u8; 8] = self.lookup(id)?;
+            return Ok(Id::from_le_bytes(bytes));
         }
         Err(Error::InvalidCheckpoint)
     }
