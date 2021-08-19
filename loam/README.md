@@ -47,7 +47,7 @@ Minor Version | digits: `00` | 2
 
 ### Chunks
 
-Chunks consist of three fields, serialized using [bincode].
+A chunk consists of these fields, serialized using [bincode]:
 
 Field      | Description
 -----------|--------------------------------------------------

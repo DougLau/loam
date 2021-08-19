@@ -4,6 +4,7 @@
 //
 use serde::{Deserialize, Serialize};
 use std::convert::TryInto;
+use std::fmt;
 use std::num::NonZeroU64;
 
 /// Errors for reading or writing loam files
@@ -22,8 +23,8 @@ pub enum Error {
     InvalidHeader,
 
     /// Invalid CRC
-    #[error("Invalid CRC")]
-    InvalidCrc,
+    #[error("Invalid CRC at Id {0}")]
+    InvalidCrc(Id),
 
     /// Invalid checkpoint
     #[error("Invalid Checkpoint")]
@@ -40,6 +41,12 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// Chunk Identifier
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub struct Id(NonZeroU64);
+
+impl fmt::Display for Id {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Id: {:?}", self.0)
+    }
+}
 
 impl Id {
     pub(crate) fn new(id: u64) -> Option<Self> {
