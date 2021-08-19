@@ -2,9 +2,8 @@
 //
 // Copyright (c) 2021  Douglas P Lau
 //
-use crate::common::{Error, Id, Result};
+use crate::common::{checksum, Error, Id, Result, CRC_SZ};
 use bincode::Options;
-use crc32fast::Hasher;
 use serde::Serialize;
 use std::fs::{File, OpenOptions};
 use std::io::Write;
@@ -42,15 +41,12 @@ impl Writer {
         let options = bincode::DefaultOptions::new();
         let len = options.serialized_size(data)? as usize;
         let lenlen = options.serialized_size(&len)? as usize;
-        let mut buf = Vec::with_capacity(lenlen + len + 4);
+        let mut buf = Vec::with_capacity(lenlen + len + CRC_SZ);
         options.serialize_into(&mut buf, &len)?;
         options.serialize_into(&mut buf, &data)?;
-        let mut hasher = Hasher::new();
-        hasher.update(&buf);
-        let checksum = hasher.finalize();
-        options
-            .serialize_into(&mut buf, &checksum.to_le_bytes())
-            .unwrap();
+        if let Some(checksum) = checksum(&mut buf) {
+            buf.extend(&checksum.to_le_bytes());
+        }
         self.file.write_all(&buf)?;
         Ok(id)
     }

@@ -2,7 +2,7 @@
 //
 // Copyright (c) 2021  Douglas P Lau
 //
-use crate::common::{Error, Id, Result};
+use crate::common::{Error, Id, Result, CRC_SZ};
 use bincode::Options;
 use memmap2::Mmap;
 use serde::Deserialize;
@@ -22,7 +22,7 @@ pub struct Reader {
 const HEADER: &[u8; 8] = b"loam0000";
 
 /// Size of checkpoint chunk in bytes
-const CHECKPOINT_SZ: usize = 13;
+const CHECKPOINT_SZ: usize = 9 + CRC_SZ;
 
 impl Reader {
     /// Create a new Reader
@@ -61,11 +61,21 @@ impl Reader {
             && base < self.len
         {
             let options = bincode::DefaultOptions::new().allow_trailing_bytes();
-            // todo: check crc
-            let dlen: Id = options.deserialize(&self.mmap[base..])?;
+            let dlen: u64 = options.deserialize(&self.mmap[base..])?;
+            #[cfg(feature = "crc")]
+            {
+                let crcoff = base + dlen as usize + 1;
+                let chunk = &self.mmap[base..crcoff];
+                if let Some(checksum) = crate::common::checksum(chunk) {
+                    let stored = &self.mmap[crcoff..crcoff + CRC_SZ];
+                    let calced = &checksum.to_le_bytes()[..];
+                    if stored != calced {
+                        return Err(Error::InvalidCrc);
+                    }
+                }
+            }
             let offset = options.serialized_size(&dlen)? as usize;
-            let data = options.deserialize(&self.mmap[base + offset..])?;
-            return Ok(data);
+            return Ok(options.deserialize(&self.mmap[base + offset..])?);
         }
         Err(Error::InvalidId)
     }

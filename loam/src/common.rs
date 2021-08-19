@@ -21,6 +21,10 @@ pub enum Error {
     #[error("Invalid Header")]
     InvalidHeader,
 
+    /// Invalid CRC
+    #[error("Invalid CRC")]
+    InvalidCrc,
+
     /// Invalid checkpoint
     #[error("Invalid Checkpoint")]
     InvalidCheckpoint,
@@ -52,4 +56,22 @@ impl Id {
     pub(crate) fn to_usize(self) -> usize {
         self.0.get() as usize
     }
+}
+
+#[cfg(feature = "crc")]
+pub const CRC_SZ: usize = 4;
+
+#[cfg(feature = "crc")]
+pub fn checksum(buf: &[u8]) -> Option<u32> {
+    let mut hasher = crc32fast::Hasher::new();
+    hasher.update(&buf);
+    Some(hasher.finalize())
+}
+
+#[cfg(not(feature = "crc"))]
+pub const CRC_SZ: usize = 0;
+
+#[cfg(not(feature = "crc"))]
+pub fn checksum(_buf: &[u8]) -> Option<u32> {
+    None
 }

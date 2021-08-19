@@ -49,14 +49,16 @@ Minor Version | digits: `00` | 2
 
 Chunks consist of three fields, serialized using [bincode].
 
-Field    | Description
----------|--------------------------------------------------
-Length   | Number of bytes in *Data* (variable-size integer)
-Data     | Serialized chunk data
-Checksum | CRC-32 of *Length* + *Data* (fixed-size integer)
+Field      | Description
+-----------|--------------------------------------------------
+Length     | Number of bytes in *Data* (variable-size integer)
+Data       | Serialized chunk data
+Checksum † | CRC-32 of *Length* + *Data* (fixed-size integer)
 
 An __Id__ is the file offset of a chunk.  It can be used to `Deserialize` the
 Data field.
+
+† Checksums are only included if the `crc` feature is enabled.
 
 ### Checkpoint
 
