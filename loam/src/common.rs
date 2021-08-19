@@ -3,7 +3,6 @@
 // Copyright (c) 2021  Douglas P Lau
 //
 use serde::{Deserialize, Serialize};
-use std::convert::TryInto;
 use std::fmt;
 use std::num::NonZeroU64;
 
@@ -18,21 +17,21 @@ pub enum Error {
     #[error("Bincode {0}")]
     Bincode(#[from] Box<bincode::ErrorKind>),
 
-    /// Invalid header
+    /// Invalid Header
     #[error("Invalid Header")]
     InvalidHeader,
 
     /// Invalid CRC
-    #[error("Invalid CRC at Id {0}")]
+    #[error("Invalid CRC")]
     InvalidCrc(Id),
 
-    /// Invalid checkpoint
+    /// Invalid Checkpoint
     #[error("Invalid Checkpoint")]
     InvalidCheckpoint,
 
     /// Invalid ID
     #[error("Invalid ID")]
-    InvalidId,
+    InvalidId(Id),
 }
 
 /// Result for reading or writing loam files
@@ -52,10 +51,8 @@ impl Id {
     pub(crate) fn new(id: u64) -> Option<Self> {
         NonZeroU64::new(id).map(Id)
     }
-    pub(crate) fn from_le_slice(buf: &[u8]) -> Option<Self> {
-        let bytes = buf.try_into().ok()?;
-        let id = u64::from_le_bytes(bytes);
-        Self::new(id)
+    pub(crate) fn from_le_bytes(bytes: [u8; 8]) -> Option<Self> {
+        Self::new(u64::from_le_bytes(bytes))
     }
     pub(crate) fn to_le_bytes(self) -> [u8; 8] {
         self.0.get().to_le_bytes()

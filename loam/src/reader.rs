@@ -44,23 +44,11 @@ impl Reader {
     pub fn root(&self) -> Result<Id> {
         if self.len >= HEADER.len() + CHECKPOINT_SZ {
             let base = self.len - CHECKPOINT_SZ;
-            if self.mmap[base] == 8 {
-                #[cfg(feature = "crc")]
-                {
-                    let crcoff = self.len - CRC_SZ;
-                    let chunk = &self.mmap[base..crcoff];
-                    if let Some(checksum) = crate::common::checksum(chunk) {
-                        let calced = &checksum.to_le_bytes()[..];
-                        let stored = &self.mmap[crcoff..crcoff + CRC_SZ];
-                        if calced != stored {
-                            let id = Id::new(base as u64)
-                                .ok_or(Error::InvalidCheckpoint)?;
-                            return Err(Error::InvalidCrc(id));
-                        }
-                    }
+            if let Some(cid) = Id::new(base as u64) {
+                let bytes: [u8; 8] = self.lookup(cid)?;
+                if let Some(id) = Id::from_le_bytes(bytes) {
+                    return Ok(id);
                 }
-                let buf = &self.mmap[base + 1..base + 9];
-                return Id::from_le_slice(buf).ok_or(Error::InvalidCheckpoint);
             }
         }
         Err(Error::InvalidCheckpoint)
@@ -90,6 +78,6 @@ impl Reader {
             let offset = options.serialized_size(&dlen)? as usize;
             return Ok(options.deserialize(&self.mmap[base + offset..])?);
         }
-        Err(Error::InvalidId)
+        Err(Error::InvalidId(id))
     }
 }
