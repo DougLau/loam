@@ -18,7 +18,10 @@ pub struct Writer {
 
 impl Writer {
     /// Create a new Writer
-    pub fn new<P: AsRef<Path>>(path: P) -> Result<Self> {
+    pub fn new<P>(path: P) -> Result<Self>
+    where
+        P: AsRef<Path>,
+    {
         let mut file =
             OpenOptions::new().create(true).append(true).open(path)?;
         let len = file.metadata()?.len();
@@ -28,14 +31,17 @@ impl Writer {
         if len == 0 {
             file.write_all(HEADER)?;
         }
-        Ok(Writer { file })
+        Ok(Self { file })
     }
 
     /// Push a chunk of data to the end of the file.
     ///
     /// # Returns
     /// `Id` chunk identifier
-    pub fn push<D: Serialize>(&mut self, data: &D) -> Result<Id> {
+    pub fn push<D>(&mut self, data: &D) -> Result<Id>
+    where
+        D: Serialize,
+    {
         let len = self.file.metadata()?.len();
         let id = Id::new(len);
         let options = bincode::DefaultOptions::new();
