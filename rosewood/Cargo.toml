@@ -1,6 +1,13 @@
 [package]
 name = "rosewood"
 version = "0.1.0"
+description = "Persistent R-Tree Storage"
+license = "MIT OR Apache-2.0"
+documentation = "https://docs.rs/rosewood"
+repository = "https://github.com/DougLau/loam/rosewood"
+readme = "README.md"
+keywords = ["spatial"]
 edition = "2018"
 
 [dependencies]
+pointy = "0.2"
