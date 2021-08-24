@@ -201,9 +201,9 @@ where
     type Data = D;
 
     fn bbox(&self) -> BBox<F> {
-        self.strings
-            .iter()
-            .fold(BBox::default(), |bb, ls| bb.extend(&ls.pts))
+        let mut bbox = BBox::default();
+        self.strings.iter().for_each(|ls| bbox.extend(&ls.pts));
+        bbox
     }
 
     fn data(&self) -> &Self::Data {
@@ -233,9 +233,9 @@ where
     type Data = D;
 
     fn bbox(&self) -> BBox<F> {
-        self.rings
-            .iter()
-            .fold(BBox::default(), |bb, ring| bb.extend(&ring.pts))
+        let mut bbox = BBox::default();
+        self.rings.iter().for_each(|ring| bbox.extend(&ring.pts));
+        bbox
     }
 
     fn data(&self) -> &Self::Data {
@@ -265,9 +265,11 @@ where
     type Data = D;
 
     fn bbox(&self) -> BBox<F> {
-        self.polygons.iter().fold(BBox::default(), |bb, pg| {
-            pg.rings.iter().fold(bb, |b, ring| b.extend(&ring.pts))
-        })
+        let mut bbox = BBox::default();
+        self.polygons.iter().for_each(|pg| {
+            pg.rings.iter().for_each(|ring| bbox.extend(&ring.pts))
+        });
+        bbox
     }
 
     fn data(&self) -> &Self::Data {

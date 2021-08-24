@@ -5,7 +5,7 @@
 use crate::common::{Error, Id, Result, CRC_SZ, HEADER};
 use bincode::Options;
 use memmap2::Mmap;
-use serde::Deserialize;
+use serde::de::DeserializeOwned;
 use std::fs::File;
 use std::path::Path;
 
@@ -30,7 +30,7 @@ impl Reader {
         let mmap = unsafe { Mmap::map(&file)? };
         let len = mmap.len();
         if len >= HEADER.len() && HEADER == &mmap[..HEADER.len()] {
-             Ok(Reader { mmap, len })
+            Ok(Reader { mmap, len })
         } else {
             Err(Error::InvalidHeader)
         }
@@ -48,7 +48,10 @@ impl Reader {
     }
 
     /// Lookup data for the given chunk `Id`
-    pub fn lookup<'de, D: Deserialize<'de>>(&'de self, id: Id) -> Result<D> {
+    pub fn lookup<D>(&self, id: Id) -> Result<D>
+    where
+        D: DeserializeOwned,
+    {
         let base = id.to_usize();
         if self.len >= HEADER.len() + CHECKPOINT_SZ
             && base >= HEADER.len()

@@ -4,26 +4,26 @@
 //
 use crate::node::Node;
 use crate::{Geometry, Result};
-use loam::{Id, Writer};
-use pointy::Float;
-use serde::Serialize;
+use loam::{Id, Reader, Writer};
+use pointy::{BBox, Float};
+use serde::{de::DeserializeOwned, Serialize};
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 
 /// RTree bulk writer
 pub struct BulkWriter<D, F, G>
 where
-    F: Float,
+    F: Float + Serialize + DeserializeOwned,
     G: Geometry<F, Data = D> + Serialize,
 {
     /// Path to file
     path: PathBuf,
 
     /// Writer to temporary file
-    tmp_file: Writer,
+    writer: Writer,
 
-    /// Writer to RTree file
-    tree_file: Writer,
+    /// Reader for temporary file
+    reader: Reader,
 
     /// IDs of data in temporary file
     ids: Vec<Id>,
@@ -35,7 +35,7 @@ where
 
 impl<D, F, G> BulkWriter<D, F, G>
 where
-    F: Float,
+    F: Float + Serialize + DeserializeOwned,
     G: Geometry<F, Data = D> + Serialize,
 {
     /// Create a new bulk writer
@@ -47,13 +47,12 @@ where
         tmp.push(path);
         let path = tmp.clone();
         tmp.set_extension("tmp");
-        let tmp_file = Writer::new(&tmp)?;
-        tmp.set_extension("tmp2");
-        let tree_file = Writer::new(&tmp)?;
+        let writer = Writer::new(&tmp)?;
+        let reader = Reader::new(&tmp)?; // we don't need this yet...
         Ok(Self {
             path,
-            tmp_file,
-            tree_file,
+            writer,
+            reader,
             ids: vec![],
             _data: PhantomData,
             _float: PhantomData,
@@ -63,14 +62,24 @@ where
 
     /// Push geometry
     pub fn push(&mut self, geom: &G) -> Result<()> {
-        let id = self.tmp_file.push(geom)?;
+        let id = self.writer.push(geom)?;
         self.ids.push(id);
         Ok(())
     }
 
     /// Build RTree from pushed items
     pub fn finish(mut self) -> Result<()> {
-        let depth = Node::depth(self.ids.len());
+        // finish writing to the temp file
+        self.writer.checkpoint(Id::new(0))?;
+        // open another file for the real tree
+        let mut tmp = PathBuf::new();
+        tmp.push(&self.path);
+        tmp.set_extension("tmp2");
+        self.writer = Writer::new(&tmp)?;
+        // reopen the temp file for reading
+        tmp.set_extension("tmp");
+        self.reader = Reader::new(&tmp)?;
+        let depth = Node::<F>::depth(self.ids.len());
         let ids = std::mem::take(&mut self.ids);
         self.build_tree(depth, ids)?;
         self.remove_tmp_file()?;
@@ -80,6 +89,21 @@ where
 
     /// Build an RTree of the given IDs
     fn build_tree(&mut self, depth: usize, ids: Vec<Id>) -> Result<()> {
+        debug_assert!(ids.len() > 0);
+        if depth == 1 {
+            let mut bbox = BBox::<F>::default();
+            let mut wids = Vec::with_capacity(ids.len());
+            for id in ids {
+                if id.is_valid() {
+                    let geom = self.reader.lookup(id)?;
+                    bbox.extend(&[geom]);
+                    let wid = self.writer.push(&geom)?;
+                    wids.push(wid);
+                }
+            }
+            let leaf = Node::new_leaf(bbox, &wids);
+            todo!();
+        }
         todo!();
     }
 
