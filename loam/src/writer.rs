@@ -22,6 +22,9 @@ impl Writer {
     where
         P: AsRef<Path>,
     {
+        // clippy thinks append + truncate does't make sense,
+        // but it's wrong!
+        #[allow(clippy::nonsensical_open_options)]
         let mut file = OpenOptions::new()
             .create(true)
             .append(true)
@@ -53,7 +56,7 @@ impl Writer {
         let mut buf = Vec::with_capacity(lenlen + len + CRC_SZ);
         options.serialize_into(&mut buf, &len)?;
         options.serialize_into(&mut buf, &data)?;
-        if let Some(checksum) = checksum(&mut buf) {
+        if let Some(checksum) = checksum(&buf) {
             buf.extend(&checksum.to_le_bytes());
         }
         self.file.write_all(&buf)?;

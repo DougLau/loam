@@ -29,12 +29,11 @@ impl Reader {
         // Needless to say, don't do that!
         let mmap = unsafe { Mmap::map(&file)? };
         let len = mmap.len();
-        if len >= HEADER.len() {
-            if &mmap[..HEADER.len()] == HEADER {
-                return Ok(Reader { mmap, len });
-            }
+        if len >= HEADER.len() && HEADER == &mmap[..HEADER.len()] {
+             Ok(Reader { mmap, len })
+        } else {
+            Err(Error::InvalidHeader)
         }
-        Err(Error::InvalidHeader)
     }
 
     /// Get the root chunk `Id` from the last checkpoint.
