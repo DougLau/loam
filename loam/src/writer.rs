@@ -22,8 +22,11 @@ impl Writer {
     where
         P: AsRef<Path>,
     {
-        let mut file =
-            OpenOptions::new().create(true).append(true).open(path)?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .truncate(true)
+            .open(path)?;
         let len = file.metadata()?.len();
         if len > 0 && len < 8 {
             return Err(Error::InvalidHeader);
