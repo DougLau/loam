@@ -5,7 +5,7 @@
 use crate::node::Node;
 use crate::{Geometry, Result};
 use loam::{Id, Reader, Writer};
-use pointy::{BBox, Float};
+use pointy::Float;
 use serde::{de::DeserializeOwned, Serialize};
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
@@ -14,7 +14,7 @@ use std::path::{Path, PathBuf};
 pub struct BulkWriter<D, F, G>
 where
     F: Float + Serialize + DeserializeOwned,
-    G: Geometry<F, Data = D> + Serialize,
+    G: Geometry<F, Data = D> + Serialize + DeserializeOwned,
 {
     /// Path to file
     path: PathBuf,
@@ -36,7 +36,7 @@ where
 impl<D, F, G> BulkWriter<D, F, G>
 where
     F: Float + Serialize + DeserializeOwned,
-    G: Geometry<F, Data = D> + Serialize,
+    G: Geometry<F, Data = D> + Serialize + DeserializeOwned,
 {
     /// Create a new bulk writer
     pub fn new<P>(path: P) -> Result<Self>
@@ -48,7 +48,7 @@ where
         let path = tmp.clone();
         tmp.set_extension("tmp");
         let writer = Writer::new(&tmp)?;
-        let reader = Reader::new(&tmp)?; // we don't need this yet...
+        let reader = Reader::new_empty()?;
         Ok(Self {
             path,
             writer,
@@ -79,49 +79,55 @@ where
         // reopen the temp file for reading
         tmp.set_extension("tmp");
         self.reader = Reader::new(&tmp)?;
-        let depth = Node::<F>::depth(self.ids.len());
+        let height = Node::<F>::height(self.ids.len());
         let ids = std::mem::take(&mut self.ids);
-        self.build_tree(depth, ids)?;
-        self.remove_tmp_file()?;
-        self.rename_tree()?;
+        let id = self.build_tree(height, ids)?;
+        self.writer.checkpoint(id)?;
+        let path = self.path;
+        drop(self.writer);
+        remove_tmp_file(&path)?;
+        rename_tree(&path)?;
         Ok(())
     }
 
     /// Build an RTree of the given IDs
-    fn build_tree(&mut self, depth: usize, ids: Vec<Id>) -> Result<()> {
+    fn build_tree(&mut self, height: usize, ids: Vec<Id>) -> Result<Id> {
         debug_assert!(ids.len() > 0);
-        if depth == 1 {
-            let mut bbox = BBox::<F>::default();
-            let mut wids = Vec::with_capacity(ids.len());
-            for id in ids {
-                if id.is_valid() {
-                    let geom = self.reader.lookup(id)?;
-                    bbox.extend(&[geom]);
-                    let wid = self.writer.push(&geom)?;
-                    wids.push(wid);
-                }
-            }
-            let leaf = Node::new_leaf(bbox, &wids);
+        if height == 1 {
+            self.build_leaf(&ids)
+        } else {
             todo!();
         }
-        todo!();
     }
 
-    /// Remove the temporary file
-    fn remove_tmp_file(&self) -> Result<()> {
-        let mut tmp = PathBuf::new();
-        tmp.push(&self.path);
-        tmp.set_extension("tmp");
-        std::fs::remove_file(tmp)?;
-        Ok(())
+    /// Build a leaf node
+    fn build_leaf(&mut self, ids: &[Id]) -> Result<Id> {
+        let mut leaf = Node::<F>::new();
+        for id in ids {
+            if id.is_valid() {
+                let geom: G = self.reader.lookup(*id)?;
+                let wid = self.writer.push(&geom)?;
+                leaf.push(wid, geom.bbox())?;
+            }
+        }
+        Ok(self.writer.push(&leaf)?)
     }
+}
 
-    /// Rename tree file
-    fn rename_tree(&self) -> Result<()> {
-        let mut tmp2 = PathBuf::new();
-        tmp2.push(&self.path);
-        tmp2.set_extension("tmp2");
-        std::fs::rename(tmp2, &self.path)?;
-        Ok(())
-    }
+/// Remove the temporary file
+fn remove_tmp_file(path: &Path) -> Result<()> {
+    let mut tmp = PathBuf::new();
+    tmp.push(path);
+    tmp.set_extension("tmp");
+    std::fs::remove_file(tmp)?;
+    Ok(())
+}
+
+/// Rename tree file
+fn rename_tree(path: &Path) -> Result<()> {
+    let mut tmp2 = PathBuf::new();
+    tmp2.push(path);
+    tmp2.set_extension("tmp2");
+    std::fs::rename(tmp2, path)?;
+    Ok(())
 }

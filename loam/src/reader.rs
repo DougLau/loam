@@ -4,7 +4,7 @@
 //
 use crate::common::{Error, Id, Result, CRC_SZ, HEADER};
 use bincode::Options;
-use memmap2::Mmap;
+use memmap2::{Mmap, MmapMut};
 use serde::de::DeserializeOwned;
 use std::fs::File;
 use std::path::Path;
@@ -22,6 +22,13 @@ pub struct Reader {
 const CHECKPOINT_SZ: usize = 9 + CRC_SZ;
 
 impl Reader {
+    /// Create a new empty Reader
+    pub fn new_empty() -> Result<Self> {
+        let len = 1;
+        let mmap = MmapMut::map_anon(len)?.make_read_only()?;
+        Ok(Self { mmap, len })
+    }
+
     /// Create a new Reader
     pub fn new<P: AsRef<Path>>(path: P) -> Result<Self> {
         let file = File::open(path)?;

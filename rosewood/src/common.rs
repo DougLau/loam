@@ -13,6 +13,10 @@ pub enum Error {
     /// Loam error
     #[error("Loam {0}")]
     Loam(#[from] loam::Error),
+
+    /// Invalid tree
+    #[error("Invalid tree")]
+    InvalidTree,
 }
 
 /// Result for reading or writing rosewood files
