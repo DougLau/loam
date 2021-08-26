@@ -22,13 +22,9 @@ impl Writer {
     where
         P: AsRef<Path>,
     {
-        // clippy thinks append + truncate does't make sense,
-        // but it's wrong!
-        #[allow(clippy::nonsensical_open_options)]
         let mut file = OpenOptions::new()
-            .create(true)
+            .create_new(true)
             .append(true)
-            .truncate(true)
             .open(path)?;
         let len = file.metadata()?.len();
         if len > 0 && len < 8 {

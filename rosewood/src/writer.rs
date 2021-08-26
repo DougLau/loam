@@ -2,7 +2,7 @@
 //
 // Copyright (c) 2021  Douglas P Lau
 //
-use crate::node::Node;
+use crate::node::{Node, Root};
 use crate::{Geometry, Result};
 use loam::{Id, Reader, Writer};
 use pointy::{BBox, Float};
@@ -50,15 +50,35 @@ where
     Node(Vec<usize>),
 }
 
+impl<F> NodeElem<F>
+where
+    F: Float + Serialize + DeserializeOwned,
+{
+    fn lookup(&self, elems: &[Elem<F>]) -> Node<F> {
+        match self {
+            NodeElem::Leaf(leaf) => leaf.clone(),
+            NodeElem::Node(children) => {
+                let mut n = Node::new();
+                for child in children {
+                    let Elem { id, bbox } = elems[*child];
+                    n.push(id, bbox);
+                }
+                n
+            }
+        }
+    }
+}
+
 /// RTree bulk writer
 ///
 /// This writes a 2-dimensional RTree into a `loam` file, using the [OMT] bulk
 /// loading algorithm.
 ///
-/// The file is written in two steps: `Geometry` and `Node`s.  In the first
-/// step, all `Geometry` contained within each leaf node is grouped together
-/// in order to reduce page faults when reading.  In the second step, the nodes
-/// are written depth-first, with the root appearing last.
+/// The file is written in two steps:
+///
+/// 1. All `Geometry` values, grouped by leaf node in order to reduce page
+///    faults when reading.
+/// 2. All `Node` values, in depth-first order, with the root appearing last.
 ///
 /// [OMT]: http://ceur-ws.org/Vol-74/files/FORUM_18.pdf
 pub struct BulkWriter<D, F, G>
@@ -79,6 +99,9 @@ where
     elems: Vec<Elem<F>>,
 
     /// Node elements
+    ///
+    /// This is built during the first step (while writing `Geometry`), and
+    /// used during the second step to write out `Node` data
     nodes: Vec<NodeElem<F>>,
 
     _data: PhantomData<D>,
@@ -136,7 +159,7 @@ where
         self.reader = Reader::new(&tmp)?;
         let mut elems = std::mem::take(&mut self.elems);
         self.build_root(&mut elems)?;
-        let id = self.write_nodes()?;
+        let id = self.write_nodes(elems.len())?;
         self.writer.checkpoint(id)?;
         let path = self.path;
         drop(self.writer);
@@ -146,13 +169,14 @@ where
     }
 
     /// Build the root node
-    fn build_root(&mut self, elems: &mut [Elem<F>]) -> Result<()> {
-        let height = Node::<F>::height(elems.len());
+    fn build_root(&mut self, elems: &mut [Elem<F>]) -> Result<usize> {
+        let n_elems = elems.len();
+        let height = Node::<F>::height(n_elems);
         if height > 1 {
             elems.sort_unstable_by(Elem::compare_x);
-            let groups = Node::<F>::root_groups(elems.len());
+            let groups = Node::<F>::root_groups(n_elems);
             assert!(groups > 0);
-            let n_group = (elems.len() as f32 / groups as f32).ceil() as usize;
+            let n_group = (n_elems as f32 / groups as f32).ceil() as usize;
             let mut children = vec![];
             for v_chunk in elems.chunks_mut(n_group) {
                 v_chunk.sort_unstable_by(Elem::compare_y);
@@ -163,11 +187,9 @@ where
                     children.push(child);
                 }
             }
-            self.nodes.push(NodeElem::Node(children));
-            Ok(())
+            Ok(self.push_node(NodeElem::Node(children)))
         } else {
-            self.build_leaf(&elems)?;
-            Ok(())
+            self.build_leaf(elems)
         }
     }
 
@@ -187,10 +209,11 @@ where
             }
             Ok(self.push_node(NodeElem::Node(children)))
         } else {
-            self.build_leaf(&elems)
+            self.build_leaf(elems)
         }
     }
 
+    /// Push a node to the node list
     fn push_node(&mut self, ne: NodeElem<F>) -> usize {
         let idx = self.nodes.len();
         self.nodes.push(ne);
@@ -213,7 +236,7 @@ where
             }
             Ok(self.push_node(NodeElem::Node(children)))
         } else {
-            self.build_leaf(&elems)
+            self.build_leaf(elems)
         }
     }
 
@@ -225,31 +248,26 @@ where
         for Elem { id, bbox } in elems {
             let geom: G = self.reader.lookup(*id)?;
             let wid = self.writer.push(&geom)?;
-            leaf.push(wid, *bbox)?;
+            leaf.push(wid, *bbox);
         }
         Ok(self.push_node(NodeElem::Leaf(leaf)))
     }
 
     /// Write out all nodes
-    fn write_nodes(&mut self) -> Result<Id> {
+    fn write_nodes(&mut self, n_elems: usize) -> Result<Id> {
+        assert!(n_elems > 0);
         let mut elems = vec![];
-        let mut id = Id::new(0);
-        for ne in &self.nodes {
-            let node = match ne {
-                NodeElem::Leaf(leaf) => leaf.clone(),
-                NodeElem::Node(children) => {
-                    let mut n = Node::<F>::new();
-                    for child in children {
-                        let Elem { id, bbox } = elems[*child];
-                        n.push(id, bbox)?;
-                    }
-                    n
-                }
-            };
-            id = self.writer.push(&node)?;
+        let n_nodes = self.nodes.len();
+        for ne in &self.nodes[..n_nodes - 1] {
+            let node = ne.lookup(&elems);
+            let id = self.writer.push(&node)?;
             let bbox = node.bbox();
             elems.push(Elem { id, bbox });
         }
+        let ne = &self.nodes[n_nodes - 1];
+        let node = ne.lookup(&elems);
+        let root = Root::new(node, n_elems);
+        let id = self.writer.push(&root)?;
         Ok(id)
     }
 }

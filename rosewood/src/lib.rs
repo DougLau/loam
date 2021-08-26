@@ -15,6 +15,6 @@ mod writer;
 pub use common::{Error, Result};
 pub use geometry::{
     GeomType, Geometry, LineString, MultiLineString, MultiPoint, MultiPolygon,
-    Polygon,
+    Point, Polygon,
 };
 pub use writer::BulkWriter;

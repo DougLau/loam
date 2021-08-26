@@ -2,7 +2,6 @@
 //
 // Copyright (c) 2021  Douglas P Lau
 //
-use crate::common::{Error, Result};
 use loam::Id;
 use pointy::{BBox, Float};
 use serde::{Deserialize, Serialize};
@@ -20,14 +19,14 @@ where
     children: [(Id, BBox<F>); M_NODE],
 }
 
-/// RTree
+/// Root node
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct RTree<F>
+pub struct Root<F>
 where
     F: Float,
 {
-    root: Node<F>,
-    size: usize,
+    node: Node<F>,
+    n_elem: usize,
 }
 
 impl<F> Node<F>
@@ -39,13 +38,11 @@ where
         // integer logarithm (avoiding domain errors)
         let mut capacity = M_NODE;
         for height in 1.. {
-            match capacity.checked_mul(height) {
-                Some(c) => {
-                    capacity = c;
-                    if capacity >= n_elem {
-                        return height;
-                    }
-                }
+            if capacity >= n_elem {
+                return height;
+            }
+            match capacity.checked_mul(M_NODE) {
+                Some(c) => capacity = c,
                 None => break,
             }
         }
@@ -57,7 +54,7 @@ where
         let height = Node::<F>::height(n_elem);
         let n_subtree = M_NODE.pow(height as u32 - 1);
         let n_groups = (n_elem as f32 / n_subtree as f32).ceil();
-        n_groups.sqrt().floor() as usize
+        n_groups.sqrt().ceil() as usize
     }
 
     /// Get the partition size for a subtree
@@ -72,14 +69,14 @@ where
     }
 
     /// Push a child node
-    pub fn push(&mut self, id: Id, bbox: BBox<F>) -> Result<()> {
+    pub fn push(&mut self, id: Id, bbox: BBox<F>) {
         for i in 0..M_NODE {
             if !self.children[i].0.is_valid() {
                 self.children[i] = (id, bbox);
-                return Ok(());
+                return;
             }
         }
-        Err(Error::InvalidTree)
+        panic!("Too many children!");
     }
 
     /// Get the bounding box
@@ -89,5 +86,15 @@ where
             bbox.extend(*bb);
         }
         bbox
+    }
+}
+
+impl<F> Root<F>
+where
+    F: Float,
+{
+    /// Create a new root node
+    pub fn new(node: Node<F>, n_elem: usize) -> Self {
+        Self { node, n_elem }
     }
 }
