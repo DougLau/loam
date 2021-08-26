@@ -8,7 +8,7 @@ use pointy::{BBox, Float};
 use serde::{Deserialize, Serialize};
 
 /// Number of elements per node
-const ELEM_PER_NODE: usize = 6;
+const M_NODE: usize = 6;
 
 /// Node of RTree
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -17,16 +17,16 @@ where
     F: Float,
 {
     /// Child Ids, with bounding boxes
-    children: [(Id, BBox<F>); ELEM_PER_NODE],
+    children: [(Id, BBox<F>); M_NODE],
 }
 
-/// Root node
+/// RTree
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Root<F>
+pub struct RTree<F>
 where
     F: Float,
 {
-    node: Node<F>,
+    root: Node<F>,
     size: usize,
 }
 
@@ -37,12 +37,12 @@ where
     /// Get the height of a tree
     pub fn height(n_elem: usize) -> usize {
         // integer logarithm (avoiding domain errors)
-        let mut total = ELEM_PER_NODE;
+        let mut capacity = M_NODE;
         for height in 1.. {
-            match total.checked_mul(height) {
-                Some(t) => {
-                    total = t;
-                    if total >= n_elem {
+            match capacity.checked_mul(height) {
+                Some(c) => {
+                    capacity = c;
+                    if capacity >= n_elem {
                         return height;
                     }
                 }
@@ -52,20 +52,42 @@ where
         panic!("Incalculable height!")
     }
 
+    /// Calculate the number of groups to partition on each axis
+    pub fn root_groups(n_elem: usize) -> usize {
+        let height = Node::<F>::height(n_elem);
+        let n_subtree = M_NODE.pow(height as u32 - 1);
+        let n_groups = (n_elem as f32 / n_subtree as f32).ceil();
+        n_groups.sqrt().floor() as usize
+    }
+
+    /// Get the partition size for a subtree
+    pub fn partition_sz(height: usize) -> usize {
+        M_NODE.pow(height as u32 - 1)
+    }
+
     /// Create a new node
     pub fn new() -> Self {
-        let children = [(Id::new(0), BBox::default()); ELEM_PER_NODE];
+        let children = [(Id::new(0), BBox::default()); M_NODE];
         Node { children }
     }
 
     /// Push a child node
     pub fn push(&mut self, id: Id, bbox: BBox<F>) -> Result<()> {
-        for i in 0..ELEM_PER_NODE {
+        for i in 0..M_NODE {
             if !self.children[i].0.is_valid() {
                 self.children[i] = (id, bbox);
                 return Ok(());
             }
         }
         Err(Error::InvalidTree)
+    }
+
+    /// Get the bounding box
+    pub fn bbox(&self) -> BBox<F> {
+        let mut bbox = BBox::default();
+        for (_, bb) in &self.children {
+            bbox.extend(*bb);
+        }
+        bbox
     }
 }
