@@ -46,7 +46,9 @@ impl Writer {
     {
         let len = self.file.metadata()?.len();
         let id = Id::new(len);
-        let options = bincode::DefaultOptions::new();
+        let options = bincode::DefaultOptions::new()
+            .with_little_endian()
+            .with_varint_encoding();
         let len = options.serialized_size(data)? as usize;
         let lenlen = options.serialized_size(&len)? as usize;
         let mut buf = Vec::with_capacity(lenlen + len + CRC_SZ);
