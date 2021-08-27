@@ -76,6 +76,9 @@ where
     /// used during the second step to write out `Node` data
     nodes: Vec<NodeElem<F>>,
 
+    /// Current axis is X
+    x_axis: bool,
+
     _data: PhantomData<D>,
     _float: PhantomData<F>,
     _geom: PhantomData<G>,
@@ -103,6 +106,7 @@ where
             reader,
             elems: vec![],
             nodes: vec![],
+            x_axis: true,
             _data: PhantomData,
             _float: PhantomData,
             _geom: PhantomData,
@@ -155,29 +159,9 @@ where
                 let n_chunk =
                     (v_chunk.len() as f32 / groups as f32).ceil() as usize;
                 for h_chunk in v_chunk.chunks_mut(n_chunk) {
-                    let child = self.build_tree_x(height - 1, h_chunk)?;
+                    let child = self.build_subtree(height - 1, h_chunk)?;
                     children.push(child);
                 }
-            }
-            Ok(self.push_node(NodeElem::Node(children)))
-        } else {
-            self.build_leaf(elems)
-        }
-    }
-
-    /// Build a tree (or sub-tree) by partitioning in X dimension
-    fn build_tree_x(
-        &mut self,
-        height: usize,
-        elems: &mut [Entry<F>],
-    ) -> Result<usize> {
-        if height > 1 {
-            elems.sort_unstable_by(Entry::compare_x);
-            let mut children = vec![];
-            let n_group = Node::<F>::partition_sz(height);
-            for chunk in elems.chunks_mut(n_group) {
-                let child = self.build_tree_y(height - 1, chunk)?;
-                children.push(child);
             }
             Ok(self.push_node(NodeElem::Node(children)))
         } else {
@@ -192,18 +176,24 @@ where
         idx
     }
 
-    /// Build a tree (or sub-tree) by partitioning in Y dimension
-    fn build_tree_y(
+    /// Build a sub-tree recursively
+    fn build_subtree(
         &mut self,
         height: usize,
         elems: &mut [Entry<F>],
     ) -> Result<usize> {
         if height > 1 {
-            elems.sort_unstable_by(Entry::compare_y);
+            if self.x_axis {
+                elems.sort_unstable_by(Entry::compare_x);
+                self.x_axis = false;
+            } else {
+                elems.sort_unstable_by(Entry::compare_y);
+                self.x_axis = true;
+            }
             let mut children = vec![];
             let n_group = Node::<F>::partition_sz(height);
             for chunk in elems.chunks_mut(n_group) {
-                let child = self.build_tree_x(height - 1, chunk)?;
+                let child = self.build_subtree(height - 1, chunk)?;
                 children.push(child);
             }
             Ok(self.push_node(NodeElem::Node(children)))
