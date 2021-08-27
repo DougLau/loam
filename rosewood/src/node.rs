@@ -3,11 +3,25 @@
 // Copyright (c) 2021  Douglas P Lau
 //
 use loam::Id;
-use pointy::{BBox, Float};
+use pointy::{BBox, Float, Pt};
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
 
 /// Number of elements per node
 const M_NODE: usize = 6;
+
+/// Entry in a file (geometry or node)
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+pub struct Entry<F>
+where
+    F: Float,
+{
+    /// Id (file offset)
+    id: Id,
+
+    /// Bounding box
+    bbox: BBox<F>,
+}
 
 /// Node of RTree
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -15,8 +29,8 @@ pub struct Node<F>
 where
     F: Float,
 {
-    /// Child Ids, with bounding boxes
-    children: [(Id, BBox<F>); M_NODE],
+    /// Child entries
+    children: [Entry<F>; M_NODE],
 }
 
 /// Root node
@@ -25,8 +39,59 @@ pub struct Root<F>
 where
     F: Float,
 {
+    /// Node containing children
     node: Node<F>,
+
+    /// Number of elements in tree
     n_elem: usize,
+}
+
+impl<F> Default for Entry<F>
+where
+    F: Float,
+{
+    fn default() -> Self {
+        let id = Id::new(0);
+        let pt = Pt::new(F::zero(), F::zero());
+        let bbox = BBox::new([pt, pt]);
+        Self { id, bbox }
+    }
+}
+
+impl<F> Entry<F>
+where
+    F: Float,
+{
+    /// Create a new entry
+    pub fn new(id: Id, bbox: BBox<F>) -> Self {
+        Self { id, bbox }
+    }
+
+    /// Get the entry Id
+    pub fn id(&self) -> Id {
+        self.id
+    }
+
+    /// Get the entry bounding box
+    pub fn bbox(&self) -> BBox<F> {
+        self.bbox
+    }
+
+    /// Compare entries by X coordinate
+    pub fn compare_x(&self, rhs: &Self) -> Ordering {
+        self.bbox
+            .x_mid()
+            .partial_cmp(&rhs.bbox.x_mid())
+            .unwrap_or(Ordering::Equal)
+    }
+
+    /// Compare entries by Y coordinate
+    pub fn compare_y(&self, rhs: &Self) -> Ordering {
+        self.bbox
+            .y_mid()
+            .partial_cmp(&rhs.bbox.y_mid())
+            .unwrap_or(Ordering::Equal)
+    }
 }
 
 impl<F> Node<F>
@@ -64,15 +129,15 @@ where
 
     /// Create a new node
     pub fn new() -> Self {
-        let children = [(Id::new(0), BBox::default()); M_NODE];
+        let children = [Entry::default(); M_NODE];
         Node { children }
     }
 
     /// Push a child node
     pub fn push(&mut self, id: Id, bbox: BBox<F>) {
         for i in 0..M_NODE {
-            if !self.children[i].0.is_valid() {
-                self.children[i] = (id, bbox);
+            if !self.children[i].id.is_valid() {
+                self.children[i] = Entry::new(id, bbox);
                 return;
             }
         }
@@ -82,8 +147,8 @@ where
     /// Get the bounding box
     pub fn bbox(&self) -> BBox<F> {
         let mut bbox = BBox::default();
-        for (_, bb) in &self.children {
-            bbox.extend(*bb);
+        for child in &self.children {
+            bbox.extend(child.bbox);
         }
         bbox
     }

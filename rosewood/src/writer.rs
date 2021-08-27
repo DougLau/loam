@@ -2,46 +2,18 @@
 //
 // Copyright (c) 2021  Douglas P Lau
 //
-use crate::node::{Node, Root};
+use crate::node::{Entry, Node, Root};
 use crate::{Geometry, Result};
 use loam::{Id, Reader, Writer};
-use pointy::{BBox, Float};
+use pointy::Float;
 use serde::{de::DeserializeOwned, Serialize};
-use std::cmp::Ordering;
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
-
-/// File element
-struct Elem<F>
-where
-    F: Float + Serialize + DeserializeOwned,
-{
-    id: Id,
-    bbox: BBox<F>,
-}
-
-impl<F> Elem<F>
-where
-    F: Float + Serialize + DeserializeOwned,
-{
-    fn compare_x(&self, rhs: &Self) -> Ordering {
-        self.bbox
-            .x_mid()
-            .partial_cmp(&rhs.bbox.x_mid())
-            .unwrap_or(Ordering::Equal)
-    }
-    fn compare_y(&self, rhs: &Self) -> Ordering {
-        self.bbox
-            .y_mid()
-            .partial_cmp(&rhs.bbox.y_mid())
-            .unwrap_or(Ordering::Equal)
-    }
-}
 
 /// Node file element
 enum NodeElem<F>
 where
-    F: Float + Serialize + DeserializeOwned,
+    F: Float,
 {
     /// Leaf node
     Leaf(Node<F>),
@@ -52,16 +24,16 @@ where
 
 impl<F> NodeElem<F>
 where
-    F: Float + Serialize + DeserializeOwned,
+    F: Float,
 {
-    fn lookup(&self, elems: &[Elem<F>]) -> Node<F> {
+    fn lookup(&self, node_entries: &[Entry<F>]) -> Node<F> {
         match self {
             NodeElem::Leaf(leaf) => leaf.clone(),
             NodeElem::Node(children) => {
                 let mut n = Node::new();
                 for child in children {
-                    let Elem { id, bbox } = elems[*child];
-                    n.push(id, bbox);
+                    let entry = &node_entries[*child];
+                    n.push(entry.id(), entry.bbox());
                 }
                 n
             }
@@ -95,10 +67,10 @@ where
     /// Reader for temporary file
     reader: Reader,
 
-    /// Geometry elements
-    elems: Vec<Elem<F>>,
+    /// Geometry entries
+    elems: Vec<Entry<F>>,
 
-    /// Node elements
+    /// Node entries
     ///
     /// This is built during the first step (while writing `Geometry`), and
     /// used during the second step to write out `Node` data
@@ -141,7 +113,7 @@ where
     pub fn push(&mut self, geom: &G) -> Result<()> {
         let id = self.writer.push(geom)?;
         let bbox = geom.bbox();
-        self.elems.push(Elem { id, bbox });
+        self.elems.push(Entry::new(id, bbox));
         Ok(())
     }
 
@@ -158,7 +130,7 @@ where
         tmp.set_extension("tmp");
         self.reader = Reader::new(&tmp)?;
         let mut elems = std::mem::take(&mut self.elems);
-        self.build_root(&mut elems)?;
+        self.build_tree(&mut elems)?;
         let id = self.write_nodes(elems.len())?;
         self.writer.checkpoint(id)?;
         let path = self.path;
@@ -168,18 +140,18 @@ where
         Ok(())
     }
 
-    /// Build the root node
-    fn build_root(&mut self, elems: &mut [Elem<F>]) -> Result<usize> {
+    /// Build the tree recursively
+    fn build_tree(&mut self, elems: &mut [Entry<F>]) -> Result<usize> {
         let n_elems = elems.len();
         let height = Node::<F>::height(n_elems);
         if height > 1 {
-            elems.sort_unstable_by(Elem::compare_x);
+            elems.sort_unstable_by(Entry::compare_x);
             let groups = Node::<F>::root_groups(n_elems);
             assert!(groups > 0);
             let n_group = (n_elems as f32 / groups as f32).ceil() as usize;
             let mut children = vec![];
             for v_chunk in elems.chunks_mut(n_group) {
-                v_chunk.sort_unstable_by(Elem::compare_y);
+                v_chunk.sort_unstable_by(Entry::compare_y);
                 let n_chunk =
                     (v_chunk.len() as f32 / groups as f32).ceil() as usize;
                 for h_chunk in v_chunk.chunks_mut(n_chunk) {
@@ -197,10 +169,10 @@ where
     fn build_tree_x(
         &mut self,
         height: usize,
-        elems: &mut [Elem<F>],
+        elems: &mut [Entry<F>],
     ) -> Result<usize> {
         if height > 1 {
-            elems.sort_unstable_by(Elem::compare_x);
+            elems.sort_unstable_by(Entry::compare_x);
             let mut children = vec![];
             let n_group = Node::<F>::partition_sz(height);
             for chunk in elems.chunks_mut(n_group) {
@@ -224,10 +196,10 @@ where
     fn build_tree_y(
         &mut self,
         height: usize,
-        elems: &mut [Elem<F>],
+        elems: &mut [Entry<F>],
     ) -> Result<usize> {
         if height > 1 {
-            elems.sort_unstable_by(Elem::compare_y);
+            elems.sort_unstable_by(Entry::compare_y);
             let mut children = vec![];
             let n_group = Node::<F>::partition_sz(height);
             for chunk in elems.chunks_mut(n_group) {
@@ -243,12 +215,12 @@ where
     /// Build a leaf node
     ///
     /// Returns index in nodes vector
-    fn build_leaf(&mut self, elems: &[Elem<F>]) -> Result<usize> {
+    fn build_leaf(&mut self, elems: &[Entry<F>]) -> Result<usize> {
         let mut leaf = Node::<F>::new();
-        for Elem { id, bbox } in elems {
-            let geom: G = self.reader.lookup(*id)?;
+        for entry in elems {
+            let geom: G = self.reader.lookup(entry.id())?;
             let wid = self.writer.push(&geom)?;
-            leaf.push(wid, *bbox);
+            leaf.push(wid, entry.bbox());
         }
         Ok(self.push_node(NodeElem::Leaf(leaf)))
     }
@@ -256,16 +228,16 @@ where
     /// Write out all nodes
     fn write_nodes(&mut self, n_elems: usize) -> Result<Id> {
         assert!(n_elems > 0);
-        let mut elems = vec![];
+        let mut node_entries = vec![];
         let n_nodes = self.nodes.len();
         for ne in &self.nodes[..n_nodes - 1] {
-            let node = ne.lookup(&elems);
+            let node = ne.lookup(&node_entries);
             let id = self.writer.push(&node)?;
             let bbox = node.bbox();
-            elems.push(Elem { id, bbox });
+            node_entries.push(Entry::new(id, bbox));
         }
         let ne = &self.nodes[n_nodes - 1];
-        let node = ne.lookup(&elems);
+        let node = ne.lookup(&node_entries);
         let root = Root::new(node, n_elems);
         let id = self.writer.push(&root)?;
         Ok(id)
