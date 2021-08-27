@@ -10,6 +10,25 @@ use serde::{de::DeserializeOwned, Serialize};
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 
+/// Axis for sorting
+#[derive(Copy, Clone, Debug, PartialEq)]
+enum Axis {
+    X, Y,
+}
+
+impl Axis {
+    fn with_height(self, height: usize) -> Self {
+        if height % 2 != 0 {
+            self
+        } else {
+            match self {
+                Axis::X => Axis::Y,
+                Axis::Y => Axis::X,
+            }
+        }
+    }
+}
+
 /// Node file element
 enum NodeElem<F>
 where
@@ -76,8 +95,8 @@ where
     /// used during the second step to write out `Node` data
     nodes: Vec<NodeElem<F>>,
 
-    /// Current axis is X
-    x_axis: bool,
+    /// Axis for odd height values
+    odd_axis: Axis,
 
     _data: PhantomData<D>,
     _float: PhantomData<F>,
@@ -106,7 +125,7 @@ where
             reader,
             elems: vec![],
             nodes: vec![],
-            x_axis: true,
+            odd_axis: Axis::X,
             _data: PhantomData,
             _float: PhantomData,
             _geom: PhantomData,
@@ -148,6 +167,7 @@ where
     fn build_tree(&mut self, elems: &mut [Entry<F>]) -> Result<usize> {
         let n_elems = elems.len();
         let height = Node::<F>::height(n_elems);
+        self.odd_axis = Axis::Y.with_height(height);
         if height > 1 {
             elems.sort_unstable_by(Entry::compare_x);
             let groups = Node::<F>::root_groups(n_elems);
@@ -183,12 +203,9 @@ where
         elems: &mut [Entry<F>],
     ) -> Result<usize> {
         if height > 1 {
-            if self.x_axis {
-                elems.sort_unstable_by(Entry::compare_x);
-                self.x_axis = false;
-            } else {
-                elems.sort_unstable_by(Entry::compare_y);
-                self.x_axis = true;
+            match self.odd_axis.with_height(height) {
+                Axis::X => elems.sort_unstable_by(Entry::compare_x),
+                Axis::Y => elems.sort_unstable_by(Entry::compare_y),
             }
             let mut children = vec![];
             let n_group = Node::<F>::partition_sz(height);
@@ -250,4 +267,22 @@ fn rename_tree(path: &Path) -> Result<()> {
     tmp2.set_extension("tmp2");
     std::fs::rename(tmp2, path)?;
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn axis() {
+        let axis = Axis::Y.with_height(4);
+        assert_eq!(Axis::X, axis);
+        assert_eq!(Axis::X, axis.with_height(3));
+        assert_eq!(Axis::Y, axis.with_height(2));
+        assert_eq!(Axis::X, axis.with_height(1));
+        let axis = Axis::Y.with_height(3);
+        assert_eq!(Axis::Y, axis);
+        assert_eq!(Axis::X, axis.with_height(2));
+        assert_eq!(Axis::Y, axis.with_height(1));
+    }
 }
