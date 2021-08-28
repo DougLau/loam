@@ -3,8 +3,8 @@
 // Copyright (c) 2021  Douglas P Lau
 //
 use crate::node::{Entry, Node, Root};
-use crate::{Geometry, Result};
-use loam::{Id, Reader, Writer};
+use crate::Geometry;
+use loam::{Id, Reader, Result, Writer};
 use pointy::Float;
 use serde::{de::DeserializeOwned, Serialize};
 use std::marker::PhantomData;
