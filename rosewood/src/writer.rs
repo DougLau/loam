@@ -13,7 +13,8 @@ use std::path::{Path, PathBuf};
 /// Axis for sorting
 #[derive(Copy, Clone, Debug, PartialEq)]
 enum Axis {
-    X, Y,
+    X,
+    Y,
 }
 
 impl Axis {

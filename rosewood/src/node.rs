@@ -148,9 +148,15 @@ where
     pub fn bbox(&self) -> BBox<F> {
         let mut bbox = BBox::default();
         for child in &self.children {
-            bbox.extend(child.bbox);
+            if child.id.is_valid() {
+                bbox.extend(child.bbox);
+            }
         }
         bbox
+    }
+
+    pub fn into_entries(self) -> [Entry<F>; M_NODE] {
+        self.children
     }
 }
 
@@ -161,5 +167,15 @@ where
     /// Create a new root node
     pub fn new(node: Node<F>, n_elem: usize) -> Self {
         Self { node, n_elem }
+    }
+
+    /// Get the number of elements
+    pub fn n_elem(&self) -> usize {
+        self.n_elem
+    }
+
+    /// Get inner node
+    pub fn into_node(self) -> Node<F> {
+        self.node
     }
 }

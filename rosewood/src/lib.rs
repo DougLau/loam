@@ -9,7 +9,7 @@
 mod common;
 mod geometry;
 mod node;
-//mod reader;
+mod reader;
 mod writer;
 
 pub use common::{Error, Result};
@@ -17,4 +17,5 @@ pub use geometry::{
     GeomType, Geometry, LineString, MultiLineString, MultiPoint, MultiPolygon,
     Point, Polygon,
 };
+pub use reader::RTree;
 pub use writer::BulkWriter;
