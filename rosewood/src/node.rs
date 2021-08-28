@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 
 /// Number of elements per node
-const M_NODE: usize = 6;
+pub const M_NODE: usize = 6;
 
 /// Entry in a file (geometry or node)
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
@@ -91,6 +91,11 @@ where
             .y_mid()
             .partial_cmp(&rhs.bbox.y_mid())
             .unwrap_or(Ordering::Equal)
+    }
+
+    /// Check if an entry intersects with a bounding box
+    pub fn intersects(&self, bbox: BBox<F>) -> bool {
+        self.id.is_valid() && self.bbox.intersects(bbox)
     }
 }
 

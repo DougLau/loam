@@ -2,7 +2,7 @@
 //
 // Copyright (c) 2021  Douglas P Lau
 //
-use crate::node::{Node, Root};
+use crate::node::{Node, Root, M_NODE};
 use crate::{Error, Geometry, Result};
 use loam::{Id, Reader};
 use pointy::{BBox, Float};
@@ -62,10 +62,8 @@ where
                     Ok(node) => {
                         let children = node.into_entries();
                         for child in children {
-                            let id = child.id();
-                            let bbox = child.bbox();
-                            if id.is_valid() && self.bbox.intersects(bbox) {
-                                self.work.push((id, height - 1));
+                            if child.intersects(self.bbox) {
+                                self.work.push((child.id(), height - 1));
                             }
                         }
                     }
@@ -98,11 +96,10 @@ where
                         let height = Node::<F>::height(root.n_elem());
                         let node = root.into_node();
                         let children = node.into_entries();
+                        work.reserve(height * M_NODE);
                         for child in children {
-                            let id = child.id();
-                            // FIXME: check bbox also
-                            if id.is_valid() {
-                                work.push((id, height));
+                            if child.intersects(bbox) {
+                                work.push((child.id(), height));
                             }
                         }
                     }
