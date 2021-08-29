@@ -1,17 +1,17 @@
 [package]
 name = "rosewood"
 version = "0.1.0"
-description = "Persistent R-Tree Storage"
+description = "A file-based RTree for geospatial data"
 license = "MIT OR Apache-2.0"
 documentation = "https://docs.rs/rosewood"
 repository = "https://github.com/DougLau/loam/rosewood"
 readme = "README.md"
-keywords = ["spatial"]
+keywords = ["geo", "spatial"]
 edition = "2018"
 
 [dependencies]
 loam = "0.1"
-pointy = { version = "0.2", features = ["serde"] }
+pointy = { version = "0.3", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "1"
 

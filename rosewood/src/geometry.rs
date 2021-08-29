@@ -132,6 +132,11 @@ where
         let pt = pt.into();
         Self { pt, data }
     }
+
+    /// Borrow point
+    pub fn as_point(&self) -> Pt<F> {
+        self.pt
+    }
 }
 
 impl<D, F> Geometry<F> for MultiPoint<D, F>

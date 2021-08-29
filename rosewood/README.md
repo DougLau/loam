@@ -1,3 +1,3 @@
 # Rosewood
 
-A GeoSpatial storage library
+A file-based RTree for geospatial data.
