@@ -67,12 +67,12 @@ where
                             }
                         }
                     }
-                    Err(e) => return Some(Err(e.into())),
+                    Err(e) => return Some(Err(e)),
                 }
             } else {
                 match self.tree.reader.lookup::<G>(id) {
                     Ok(geom) => return Some(Ok(geom)),
-                    Err(e) => return Some(Err(e.into())),
+                    Err(e) => return Some(Err(e)),
                 }
             }
         }
@@ -103,10 +103,10 @@ where
                             }
                         }
                     }
-                    Err(e) => error = Some(Error::from(e)),
+                    Err(e) => error = Some(e),
                 };
             }
-            Err(e) => error = Some(Error::from(e)),
+            Err(e) => error = Some(e),
         }
         Self {
             tree,
