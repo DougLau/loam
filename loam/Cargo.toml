@@ -1,7 +1,7 @@
 [package]
 name = "loam"
 version = "0.1.0"
-description = "Tree Database Library"
+description = "File-based tree storage"
 license = "MIT OR Apache-2.0"
 documentation = "https://docs.rs/loam"
 repository = "https://github.com/DougLau/loam/loam"
