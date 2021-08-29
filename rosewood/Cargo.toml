@@ -10,7 +10,7 @@ keywords = ["geo", "spatial"]
 edition = "2018"
 
 [dependencies]
-loam = "0.1"
+loam = { version = "0.1", path = "../loam" }
 pointy = { version = "0.3", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "1"
