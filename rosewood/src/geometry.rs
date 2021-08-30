@@ -22,7 +22,7 @@ where
 
 /// Point geometry
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
-pub struct Point<D, F>
+pub struct Point<F, D>
 where
     F: Float,
 {
@@ -35,7 +35,7 @@ where
 
 /// Line string geometry
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
-pub struct Linestring<D, F>
+pub struct Linestring<F, D>
 where
     F: Float,
 {
@@ -50,7 +50,7 @@ where
 ///
 /// A polygon is a `Vec` of closed rings, with the first being the outer ring.
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
-pub struct Polygon<D, F>
+pub struct Polygon<F, D>
 where
     F: Float,
 {
@@ -63,21 +63,21 @@ where
 
 /// Enum of defined geometries
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub enum GeomType<D, F>
+pub enum GeomType<F, D>
 where
     F: Float,
 {
     /// Point geometry
-    Point(Point<D, F>),
+    Point(Point<F, D>),
 
     /// Linestring geometry
-    Linestring(Linestring<D, F>),
+    Linestring(Linestring<F, D>),
 
     /// Polygon geometry
-    Polygon(Polygon<D, F>),
+    Polygon(Polygon<F, D>),
 }
 
-impl<D, F> Geometry<F> for Point<D, F>
+impl<F, D> Geometry<F> for Point<F, D>
 where
     F: Float,
 {
@@ -92,7 +92,7 @@ where
     }
 }
 
-impl<D, F> Point<D, F>
+impl<F, D> Point<F, D>
 where
     F: Float,
 {
@@ -119,7 +119,7 @@ where
     }
 }
 
-impl<D, F> Geometry<F> for Linestring<D, F>
+impl<F, D> Geometry<F> for Linestring<F, D>
 where
     F: Float,
 {
@@ -136,7 +136,7 @@ where
     }
 }
 
-impl<D, F> Linestring<D, F>
+impl<F, D> Linestring<F, D>
 where
     F: Float,
 {
@@ -162,7 +162,7 @@ where
     }
 }
 
-impl<D, F> Geometry<F> for Polygon<D, F>
+impl<F, D> Geometry<F> for Polygon<F, D>
 where
     F: Float,
 {
@@ -179,7 +179,7 @@ where
     }
 }
 
-impl<D, F> Polygon<D, F>
+impl<F, D> Polygon<F, D>
 where
     F: Float,
 {
@@ -213,7 +213,7 @@ where
     }
 }
 
-impl<D, F> Geometry<F> for GeomType<D, F>
+impl<F, D> Geometry<F> for GeomType<F, D>
 where
     F: Float,
 {

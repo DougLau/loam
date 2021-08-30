@@ -9,7 +9,7 @@ fn main() {
     writer.finish().unwrap();
 }
 
-fn random_points(n_points: usize, seed: u64) -> Vec<Point<(), f32>> {
+fn random_points(n_points: usize, seed: u64) -> Vec<Point<f32, ()>> {
     fastrand::seed(seed);
     let mut pts = Vec::with_capacity(n_points);
     for _ in 0..n_points {
