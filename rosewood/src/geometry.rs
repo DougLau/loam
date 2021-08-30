@@ -20,63 +20,44 @@ where
     fn data(&self) -> &Self::Data;
 }
 
-/// A single point
+/// Point geometry
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct Point<D, F>
 where
     F: Float,
 {
-    pt: Pt<F>,
-    data: D,
-}
-
-/// A collection of points
-#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
-pub struct MultiPoint<D, F>
-where
-    F: Float,
-{
+    /// Points in geometry
     pts: Vec<Pt<F>>,
+
+    /// Associated data
     data: D,
 }
 
-/// A string of points linked into line segments
+/// Line string geometry
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
-pub struct LineString<D, F>
+pub struct Linestring<D, F>
 where
     F: Float,
 {
-    pts: Vec<Pt<F>>,
+    /// Line strings in geometry
+    strings: Vec<Vec<Pt<F>>>,
+
+    /// Associated data
     data: D,
 }
 
-/// Collection of line strings
-#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
-pub struct MultiLineString<D, F>
-where
-    F: Float,
-{
-    strings: Vec<LineString<D, F>>,
-    data: D,
-}
-
-/// A shape containing closed rings of points
+/// Polygon geometry
+///
+/// A polygon is a `Vec` of closed rings, with the first being the outer ring.
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct Polygon<D, F>
 where
     F: Float,
 {
-    rings: Vec<LineString<D, F>>,
-    data: D,
-}
+    /// Polygons in geometry
+    polygons: Vec<Vec<Vec<Pt<F>>>>,
 
-/// A collection of polygons
-#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
-pub struct MultiPolygon<D, F>
-where
-    F: Float,
-{
-    polygons: Vec<Polygon<D, F>>,
+    /// Associated data
     data: D,
 }
 
@@ -89,20 +70,11 @@ where
     /// Point geometry
     Point(Point<D, F>),
 
-    /// Multi-point geometry
-    MultiPoint(MultiPoint<D, F>),
-
-    /// LineString geometry
-    LineString(LineString<D, F>),
-
-    /// Multi-LineString geometry
-    MultiLineString(MultiLineString<D, F>),
+    /// Linestring geometry
+    Linestring(Linestring<D, F>),
 
     /// Polygon geometry
     Polygon(Polygon<D, F>),
-
-    /// Multi-polygon geometry
-    MultiPolygon(MultiPolygon<D, F>),
 }
 
 impl<D, F> Geometry<F> for Point<D, F>
@@ -112,7 +84,7 @@ where
     type Data = D;
 
     fn bbox(&self) -> BBox<F> {
-        BBox::from(self.pt)
+        BBox::new(&self.pts)
     }
 
     fn data(&self) -> &Self::Data {
@@ -124,82 +96,30 @@ impl<D, F> Point<D, F>
 where
     F: Float,
 {
-    /// Create a new point
+    /// Create a new point geometry
     pub fn new<P>(pt: P, data: D) -> Self
     where
         P: Into<Pt<F>>,
     {
-        let pt = pt.into();
-        Self { pt, data }
-    }
-
-    /// Borrow point
-    pub fn as_point(&self) -> Pt<F> {
-        self.pt
-    }
-}
-
-impl<D, F> Geometry<F> for MultiPoint<D, F>
-where
-    F: Float,
-{
-    type Data = D;
-
-    fn bbox(&self) -> BBox<F> {
-        BBox::new(&self.pts)
-    }
-
-    fn data(&self) -> &Self::Data {
-        &self.data
-    }
-}
-
-impl<D, F> MultiPoint<D, F>
-where
-    F: Float,
-{
-    /// Create a new multi-point
-    pub fn new<I, P>(pts: I, data: D) -> Self
-    where
-        I: IntoIterator<Item = P>,
-        P: Into<Pt<F>>,
-    {
-        let pts = pts.into_iter().map(|p| p.into()).collect();
+        let pts = vec![pt.into()];
         Self { pts, data }
     }
-}
 
-impl<D, F> Geometry<F> for LineString<D, F>
-where
-    F: Float,
-{
-    type Data = D;
-
-    fn bbox(&self) -> BBox<F> {
-        BBox::new(&self.pts)
-    }
-
-    fn data(&self) -> &Self::Data {
-        &self.data
-    }
-}
-
-impl<D, F> LineString<D, F>
-where
-    F: Float,
-{
-    /// Create a new line string
-    pub fn new<I, P>(pts: I, data: D) -> Self
+    /// Add a point
+    pub fn push<P>(&mut self, pt: P)
     where
-        I: IntoIterator<Item = P>,
         P: Into<Pt<F>>,
     {
-        let pts = pts.into_iter().map(|p| p.into()).collect();
-        Self { pts, data }
+        self.pts.push(pt.into());
+    }
+
+    /// Borrow points
+    pub fn as_points(&self) -> &[Pt<F>] {
+        &self.pts
     }
 }
 
-impl<D, F> Geometry<F> for MultiLineString<D, F>
+impl<D, F> Geometry<F> for Linestring<D, F>
 where
     F: Float,
 {
@@ -207,7 +127,7 @@ where
 
     fn bbox(&self) -> BBox<F> {
         let mut bbox = BBox::default();
-        self.strings.iter().for_each(|ls| bbox.extend(&ls.pts));
+        bbox.extend(self.strings.iter().flatten());
         bbox
     }
 
@@ -216,18 +136,29 @@ where
     }
 }
 
-impl<D, F> MultiLineString<D, F>
+impl<D, F> Linestring<D, F>
 where
     F: Float,
 {
-    /// Create a new multi-line string
-    pub fn new<I, R>(strings: I, data: D) -> Self
+    /// Create a new line string geometry
+    pub fn new<I, P>(pts: I, data: D) -> Self
     where
-        I: IntoIterator<Item = R>,
-        R: Into<LineString<D, F>>,
+        I: IntoIterator<Item = P>,
+        P: Into<Pt<F>>,
     {
-        let strings = strings.into_iter().map(|r| r.into()).collect();
+        let pts = pts.into_iter().map(|pt| pt.into()).collect();
+        let strings = vec![pts];
         Self { strings, data }
+    }
+
+    /// Push a line string
+    pub fn push<I, P>(&mut self, pts: I)
+    where
+        I: IntoIterator<Item = P>,
+        P: Into<Pt<F>>,
+    {
+        let pts = pts.into_iter().map(|pt| pt.into()).collect();
+        self.strings.push(pts);
     }
 }
 
@@ -239,7 +170,7 @@ where
 
     fn bbox(&self) -> BBox<F> {
         let mut bbox = BBox::default();
-        self.rings.iter().for_each(|ring| bbox.extend(&ring.pts));
+        bbox.extend(self.polygons.iter().flatten().flatten());
         bbox
     }
 
@@ -252,48 +183,33 @@ impl<D, F> Polygon<D, F>
 where
     F: Float,
 {
-    /// Create a new polygon
-    pub fn new<I, R>(rings: I, data: D) -> Self
+    /// Create a new polygon geometry
+    pub fn new<I, P, R>(rings: I, data: D) -> Self
     where
         I: IntoIterator<Item = R>,
-        R: Into<LineString<D, F>>,
+        R: IntoIterator<Item = P>,
+        P: Into<Pt<F>>,
     {
-        let rings = rings.into_iter().map(|r| r.into()).collect();
-        Self { rings, data }
-    }
-}
-
-impl<D, F> Geometry<F> for MultiPolygon<D, F>
-where
-    F: Float,
-{
-    type Data = D;
-
-    fn bbox(&self) -> BBox<F> {
-        let mut bbox = BBox::default();
-        self.polygons.iter().for_each(|pg| {
-            pg.rings.iter().for_each(|ring| bbox.extend(&ring.pts))
-        });
-        bbox
-    }
-
-    fn data(&self) -> &Self::Data {
-        &self.data
-    }
-}
-
-impl<D, F> MultiPolygon<D, F>
-where
-    F: Float,
-{
-    /// Create a new multi-polygon
-    pub fn new<I, R>(polygons: I, data: D) -> Self
-    where
-        I: IntoIterator<Item = R>,
-        R: Into<Polygon<D, F>>,
-    {
-        let polygons = polygons.into_iter().map(|r| r.into()).collect();
+        let mut polygon = vec![];
+        for ring in rings.into_iter() {
+            polygon.push(ring.into_iter().map(|pt| pt.into()).collect());
+        }
+        let polygons = vec![polygon];
         Self { polygons, data }
+    }
+
+    /// Push a polygon
+    pub fn push<I, P, R>(&mut self, rings: I)
+    where
+        I: IntoIterator<Item = R>,
+        R: IntoIterator<Item = P>,
+        P: Into<Pt<F>>,
+    {
+        let mut polygon = vec![];
+        for ring in rings.into_iter() {
+            polygon.push(ring.into_iter().map(|pt| pt.into()).collect());
+        }
+        self.polygons.push(polygon);
     }
 }
 
@@ -306,22 +222,16 @@ where
     fn bbox(&self) -> BBox<F> {
         match self {
             GeomType::Point(p) => p.bbox(),
-            GeomType::MultiPoint(mp) => mp.bbox(),
-            GeomType::LineString(ls) => ls.bbox(),
-            GeomType::MultiLineString(mls) => mls.bbox(),
+            GeomType::Linestring(ls) => ls.bbox(),
             GeomType::Polygon(pg) => pg.bbox(),
-            GeomType::MultiPolygon(mpg) => mpg.bbox(),
         }
     }
 
     fn data(&self) -> &Self::Data {
         match self {
             GeomType::Point(p) => p.data(),
-            GeomType::MultiPoint(mp) => mp.data(),
-            GeomType::LineString(ls) => ls.data(),
-            GeomType::MultiLineString(mls) => mls.data(),
+            GeomType::Linestring(ls) => ls.data(),
             GeomType::Polygon(pg) => pg.data(),
-            GeomType::MultiPolygon(mpg) => mpg.data(),
         }
     }
 }

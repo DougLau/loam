@@ -9,8 +9,9 @@ fn main() {
     let bbox = BBox::new([(0.5_f32, 0.5), (1.0, 1.0)]);
     let mut n = 0;
     for point in rtree.query(bbox) {
-        let pt = point.unwrap().as_point();
-        println!("x: {}, y: {}", pt.x(), pt.y());
+        for pt in point.unwrap().as_points() {
+            println!("x: {}, y: {}", pt.x(), pt.y());
+        }
         n += 1;
     }
     dbg!(n);

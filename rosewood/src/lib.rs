@@ -11,9 +11,6 @@ mod node;
 mod reader;
 mod writer;
 
-pub use geometry::{
-    GeomType, Geometry, LineString, MultiLineString, MultiPoint, MultiPolygon,
-    Point, Polygon,
-};
+pub use geometry::{GeomType, Geometry, Linestring, Point, Polygon};
 pub use reader::RTree;
 pub use writer::BulkWriter;
