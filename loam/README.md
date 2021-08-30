@@ -2,7 +2,7 @@
 
 A Rust library for storing tree-like data structures to files.  The intended
 use-case is for querying data which does not fit into RAM.  The motivating
-project, [rosewood], uses GeoSpatial data in an [RTree].
+project, [rosewood], uses geospatial data in an [RTree].
 
 __Loam__ allows you to store anything which implements `Serialize`.  Data is
 appended to the end of the file and never modified once written.  This enables
@@ -10,7 +10,7 @@ the use of `mmap` to read files without the risk of undefined behavior.
 
 ## Write Example
 
-```
+```rust
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut writer = loam::Writer::new("../target/test.loam")?;
     let id = writer.push(&"Don't forget me!")?;
@@ -21,7 +21,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## Read Example
 
-```
+```rust
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let reader = loam::Reader::new("../target/test.loam")?;
     let id = reader.root()?;
