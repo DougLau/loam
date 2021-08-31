@@ -1,8 +1,8 @@
 # Loam
 
-A Rust library for storing tree-like data structures to files.  The intended
-use-case is for querying data which does not fit into RAM.  The motivating
-project, [rosewood], uses geospatial data in an [RTree].
+This is a Rust library for storing and querying tree-like data structures in
+files.  The motivating project is [rosewood], which stores geospatial data in an
+[R-Tree].
 
 __Loam__ allows you to store anything which implements `Serialize`.  Data is
 appended to the end of the file and never modified once written.  This enables
@@ -69,4 +69,4 @@ the root without needing to scan the entire file.
 
 [bincode]: https://github.com/bincode-org/bincode
 [rosewood]: ../rosewood/index.html
-[rtree]: https://en.wikipedia.org/wiki/R-tree
+[r-tree]: https://en.wikipedia.org/wiki/R-tree
