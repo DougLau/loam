@@ -14,5 +14,5 @@ fn main() {
         }
         n += 1;
     }
-    dbg!(n);
+    println!("found: ", n);
 }
