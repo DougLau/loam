@@ -4,6 +4,7 @@
 //
 use pointy::{BBox, Float, Pt};
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
 
 /// Geometry which can be stored in an RTree
 pub trait Geometry<F>
@@ -48,14 +49,15 @@ where
 
 /// Polygon geometry
 ///
-/// A polygon is a `Vec` of closed rings, with the first being the outer ring.
+/// A polygon is a `Vec` of closed rings.  The winding order determines whether
+/// a ring is "outer" or "inner".
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct Polygon<F, D>
 where
     F: Float,
 {
     /// Polygons in geometry
-    polygons: Vec<Vec<Vec<Pt<F>>>>,
+    rings: Vec<Vec<Pt<F>>>,
 
     /// Associated data
     data: D,
@@ -170,7 +172,7 @@ where
 
     fn bbox(&self) -> BBox<F> {
         let mut bbox = BBox::default();
-        bbox.extend(self.polygons.iter().flatten().flatten());
+        bbox.extend(self.rings.iter().flatten());
         bbox
     }
 
@@ -184,33 +186,70 @@ where
     F: Float,
 {
     /// Create a new polygon geometry
-    pub fn new<I, P, R>(rings: I, data: D) -> Self
-    where
-        I: IntoIterator<Item = R>,
-        R: IntoIterator<Item = P>,
-        P: Into<Pt<F>>,
-    {
-        let mut polygon = vec![];
-        for ring in rings.into_iter() {
-            polygon.push(ring.into_iter().map(|pt| pt.into()).collect());
-        }
-        let polygons = vec![polygon];
-        Self { polygons, data }
+    pub fn new(data: D) -> Self {
+        let rings = vec![];
+        Self { rings, data }
     }
 
-    /// Push a polygon
-    pub fn push<I, P, R>(&mut self, rings: I)
+    /// Push an outer polygon
+    pub fn push_outer<I, P>(&mut self, ring: I)
     where
-        I: IntoIterator<Item = R>,
-        R: IntoIterator<Item = P>,
+        I: IntoIterator<Item = P>,
         P: Into<Pt<F>>,
     {
-        let mut polygon = vec![];
-        for ring in rings.into_iter() {
-            polygon.push(ring.into_iter().map(|pt| pt.into()).collect());
+        let mut ring: Vec<_> = ring.into_iter().map(|pt| pt.into()).collect();
+        if !is_clockwise(&ring) {
+            ring.reverse();
         }
-        self.polygons.push(polygon);
+        self.rings.push(ring);
     }
+
+    /// Push an inner polygon
+    pub fn push_inner<I, P>(&mut self, ring: I)
+    where
+        I: IntoIterator<Item = P>,
+        P: Into<Pt<F>>,
+    {
+        let mut ring: Vec<_> = ring.into_iter().map(|pt| pt.into()).collect();
+        if is_clockwise(&ring) {
+            ring.reverse();
+        }
+        self.rings.push(ring);
+    }
+}
+
+/// Check if a ring of points has clockwise winding order
+fn is_clockwise<F>(ring: &[Pt<F>]) -> bool
+where
+    F: Float,
+{
+    if let Some(ext) = find_extreme_point(ring) {
+        let len = ring.len();
+        let a = if ext > 0 { ext - 1 } else { len - 1 };
+        let b = if ext < len - 1 { ext + 1 } else { 0 };
+        // Make two vectors as edges pointing toward the extreme point
+        let v0 = ring[a] - ring[ext];
+        let v1 = ring[b] - ring[ext];
+        // Cross product determines the winding order
+        (v0 * v1) > F::zero()
+    } else {
+        false
+    }
+}
+
+/// Find an extreme point on the convex hull of a polygon
+fn find_extreme_point<F>(ring: &[Pt<F>]) -> Option<usize>
+where
+    F: Float,
+{
+    ring.iter()
+        .enumerate()
+        .min_by(|a, b| {
+            (a.1.x(), a.1.y())
+                .partial_cmp(&(b.1.x(), b.1.y()))
+                .unwrap_or(Ordering::Greater)
+        })
+        .map(|e| e.0)
 }
 
 impl<F, D> Geometry<F> for GeomType<F, D>
@@ -233,5 +272,18 @@ where
             GeomType::Linestring(ls) => ls.data(),
             GeomType::Polygon(pg) => pg.data(),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn clockwise() {
+        let ring = [(0.0, 0.0).into(), (1.0, 0.0).into(), (0.0, 1.0).into()];
+        assert_eq!(false, is_clockwise(&ring));
+        let ring = [(0.0, 0.0).into(), (0.0, 1.0).into(), (1.0, 0.0).into()];
+        assert_eq!(true, is_clockwise(&ring));
     }
 }
