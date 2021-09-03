@@ -14,5 +14,5 @@ fn main() {
         }
         n += 1;
     }
-    println!("found: ", n);
+    println!("found: {}", n);
 }

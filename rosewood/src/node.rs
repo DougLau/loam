@@ -146,7 +146,7 @@ where
                 return;
             }
         }
-        panic!("Too many children!");
+        panic!("Too many children: {:?}", id);
     }
 
     /// Get the bounding box

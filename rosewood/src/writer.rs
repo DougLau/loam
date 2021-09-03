@@ -2,7 +2,7 @@
 //
 // Copyright (c) 2021  Douglas P Lau
 //
-use crate::node::{Entry, Node, Root};
+use crate::node::{Entry, Node, Root, M_NODE};
 use crate::Geometry;
 use loam::{Id, Reader, Result, Writer};
 use pointy::Float;
@@ -167,18 +167,28 @@ where
     /// Build the tree recursively
     fn build_tree(&mut self, elems: &mut [Entry<F>]) -> Result<usize> {
         let n_elems = elems.len();
+        log::debug!("n_elems: {}", n_elems);
         let height = Node::<F>::height(n_elems);
+        log::debug!("height: {}", height);
         self.odd_axis = Axis::Y.with_height(height);
         if height > 1 {
             elems.sort_unstable_by(Entry::compare_x);
             let groups = Node::<F>::root_groups(n_elems);
             assert!(groups > 0);
             let n_group = (n_elems as f32 / groups as f32).ceil() as usize;
+            let v_group = M_NODE / groups;
+            log::debug!(
+                "groups: {}, n_group: {}, v_group: {}",
+                groups,
+                n_group,
+                v_group
+            );
             let mut children = vec![];
             for v_chunk in elems.chunks_mut(n_group) {
                 v_chunk.sort_unstable_by(Entry::compare_y);
                 let n_chunk =
-                    (v_chunk.len() as f32 / groups as f32).ceil() as usize;
+                    (v_chunk.len() as f32 / v_group as f32).ceil() as usize;
+                log::debug!("n_chunk: {}", n_chunk);
                 for h_chunk in v_chunk.chunks_mut(n_chunk) {
                     let child = self.build_subtree(height - 1, h_chunk)?;
                     children.push(child);
