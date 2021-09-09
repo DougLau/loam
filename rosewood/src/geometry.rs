@@ -65,7 +65,7 @@ where
 
 /// Enum of defined geometries
 #[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-pub enum GeomType<F, D>
+pub enum Geom<F, D>
 where
     F: Float,
 {
@@ -252,7 +252,7 @@ where
         .map(|e| e.0)
 }
 
-impl<F, D> Geometry<F> for GeomType<F, D>
+impl<F, D> Geometry<F> for Geom<F, D>
 where
     F: Float,
 {
@@ -260,17 +260,17 @@ where
 
     fn bbox(&self) -> BBox<F> {
         match self {
-            GeomType::Point(p) => p.bbox(),
-            GeomType::Linestring(ls) => ls.bbox(),
-            GeomType::Polygon(pg) => pg.bbox(),
+            Geom::Point(p) => p.bbox(),
+            Geom::Linestring(ls) => ls.bbox(),
+            Geom::Polygon(pg) => pg.bbox(),
         }
     }
 
     fn data(&self) -> &Self::Data {
         match self {
-            GeomType::Point(p) => p.data(),
-            GeomType::Linestring(ls) => ls.data(),
-            GeomType::Polygon(pg) => pg.data(),
+            Geom::Point(p) => p.data(),
+            Geom::Linestring(ls) => ls.data(),
+            Geom::Polygon(pg) => pg.data(),
         }
     }
 }
