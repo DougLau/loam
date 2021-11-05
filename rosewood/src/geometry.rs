@@ -22,6 +22,8 @@ where
 }
 
 /// Point geometry
+///
+/// This geometry is one or more GIS points, along with associated data.
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct Point<F, D>
 where
@@ -35,6 +37,8 @@ where
 }
 
 /// Line string geometry
+///
+/// This geometry is one or more GIS line strings, along with associated data.
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 pub struct Linestring<F, D>
 where
@@ -49,6 +53,7 @@ where
 
 /// Polygon geometry
 ///
+/// This geometry is one or more GIS polygons, along with associated data.
 /// A polygon is a `Vec` of closed rings.  The winding order determines whether
 /// a ring is "outer" or "inner".
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
