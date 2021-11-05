@@ -41,7 +41,7 @@ where
     F: Float,
 {
     /// Line strings in geometry
-    strings: Vec<Vec<Pt<F>>>,
+    lines: Vec<Vec<Pt<F>>>,
 
     /// Associated data
     data: D,
@@ -129,7 +129,7 @@ where
 
     fn bbox(&self) -> BBox<F> {
         let mut bbox = BBox::default();
-        bbox.extend(self.strings.iter().flatten());
+        bbox.extend(self.lines.iter().flatten());
         bbox
     }
 
@@ -149,8 +149,8 @@ where
         P: Into<Pt<F>>,
     {
         let pts = pts.into_iter().map(|pt| pt.into()).collect();
-        let strings = vec![pts];
-        Self { strings, data }
+        let lines = vec![pts];
+        Self { lines, data }
     }
 
     /// Push a line string
@@ -160,7 +160,12 @@ where
         P: Into<Pt<F>>,
     {
         let pts = pts.into_iter().map(|pt| pt.into()).collect();
-        self.strings.push(pts);
+        self.lines.push(pts);
+    }
+
+    /// Borrow line strings
+    pub fn as_lines(&self) -> &[Vec<Pt<F>>] {
+        &self.lines
     }
 }
 
@@ -215,6 +220,11 @@ where
             ring.reverse();
         }
         self.rings.push(ring);
+    }
+
+    /// Borrow rings
+    pub fn as_rings(&self) -> &[Vec<Pt<F>>] {
+        &self.rings
     }
 }
 
