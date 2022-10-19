@@ -7,7 +7,7 @@ documentation = "https://docs.rs/rosewood"
 repository = "https://github.com/DougLau/loam/rosewood"
 readme = "README.md"
 keywords = ["geo", "spatial"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 loam = { version = "0.1", path = "../loam" }
