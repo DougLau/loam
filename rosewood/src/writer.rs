@@ -1,6 +1,6 @@
 // writer.rs
 //
-// Copyright (c) 2021  Douglas P Lau
+// Copyright (c) 2021-2022  Douglas P Lau
 //
 use crate::node::{Entry, Node, Root, M_NODE};
 use crate::Geometry;
@@ -162,6 +162,13 @@ where
         remove_tmp_file(&path)?;
         rename_tree(&path)?;
         Ok(())
+    }
+
+    /// Cancel building RTree
+    pub fn cancel(self) -> Result<()> {
+        let path = self.path;
+        drop(self.writer);
+        remove_tmp_file(&path)
     }
 
     /// Build the tree recursively
