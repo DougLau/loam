@@ -104,11 +104,8 @@ where
     F: Float,
 {
     /// Create a new point geometry
-    pub fn new<P>(pt: P, data: D) -> Self
-    where
-        P: Into<Pt<F>>,
-    {
-        let pts = vec![pt.into()];
+    pub fn new(data: D) -> Self {
+        let pts = vec![];
         Self { pts, data }
     }
 
@@ -148,13 +145,8 @@ where
     F: Float,
 {
     /// Create a new line string geometry
-    pub fn new<I, P>(pts: I, data: D) -> Self
-    where
-        I: IntoIterator<Item = P>,
-        P: Into<Pt<F>>,
-    {
-        let pts = pts.into_iter().map(|pt| pt.into()).collect();
-        let lines = vec![pts];
+    pub fn new(data: D) -> Self {
+        let lines = vec![];
         Self { lines, data }
     }
 

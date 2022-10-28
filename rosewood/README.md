@@ -10,8 +10,10 @@ use rosewood::{BulkWriter, Point};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut w = BulkWriter::new("points.loam")?;
-    let a = Point::new((5.0, 1.0), "point A".to_string());
-    let b = Point::new((3.0, 7.3), "point B".to_string());
+    let mut a = Point::new("point A".to_string());
+    a.push((5.0, 1.0));
+    let mut b = Point::new("point B".to_string());
+    b.push((3.0, 7.3));
     w.push(&a)?;
     w.push(&b)?;
     w.finish()?;
