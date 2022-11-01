@@ -2,6 +2,7 @@
 //
 // Copyright (c) 2021-2022  Douglas P Lau
 //
+//! Data types for GIS
 use pointy::{BBox, Float, Pt};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -24,7 +25,7 @@ where
 /// Point geometry
 ///
 /// This geometry is one or more GIS points, along with associated data.
-#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Deserialize, Serialize)]
 pub struct Point<F, D>
 where
     F: Float,
@@ -39,7 +40,7 @@ where
 /// Line string geometry
 ///
 /// This geometry is one or more GIS line strings, along with associated data.
-#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Deserialize, Serialize)]
 pub struct Linestring<F, D>
 where
     F: Float,
@@ -56,7 +57,7 @@ where
 /// This geometry is one or more GIS polygons, along with associated data.
 /// A polygon is a `Vec` of closed rings.  The winding order determines whether
 /// a ring is "outer" or "inner".
-#[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Deserialize, Serialize)]
 pub struct Polygon<F, D>
 where
     F: Float,
@@ -69,7 +70,7 @@ where
 }
 
 /// Enum of defined geometries
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub enum Geom<F, D>
 where
     F: Float,

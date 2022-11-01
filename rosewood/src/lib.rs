@@ -7,11 +7,10 @@
 #![warn(rustdoc::missing_doc_code_examples)]
 #![forbid(unsafe_code)]
 
-mod geometry;
+pub mod gis;
 mod node;
 mod reader;
 mod writer;
 
-pub use geometry::{Geom, GisData, Linestring, Point, Polygon};
 pub use reader::RTree;
 pub use writer::BulkWriter;

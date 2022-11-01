@@ -1,9 +1,9 @@
 // node.rs
 //
-// Copyright (c) 2021  Douglas P Lau
+// Copyright (c) 2021-2022  Douglas P Lau
 //
 use loam::Id;
-use pointy::{BBox, Float, Pt};
+use pointy::{BBox, Bounded, Float, Pt};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 
@@ -95,7 +95,7 @@ where
 
     /// Check if an entry intersects with a bounding box
     pub fn intersects(&self, bbox: BBox<F>) -> bool {
-        self.id.is_valid() && self.bbox.intersects(bbox)
+        self.id.is_valid() && self.bbox.bounded_by(bbox)
     }
 }
 

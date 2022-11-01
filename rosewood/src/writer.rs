@@ -2,8 +2,8 @@
 //
 // Copyright (c) 2021-2022  Douglas P Lau
 //
+use crate::gis::GisData;
 use crate::node::{Entry, Node, Root, M_NODE};
-use crate::GisData;
 use loam::{Id, Reader, Result, Writer};
 use pointy::Float;
 use serde::{de::DeserializeOwned, Serialize};
