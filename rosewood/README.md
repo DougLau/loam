@@ -21,7 +21,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-Each `Geometry` can have associated data, which must implement the `Serialize`
+`GisData` can have associated data, which must implement the `Serialize`
 / `Deserialize` traits from [serde].  In the example above, this is `String`.
 
 

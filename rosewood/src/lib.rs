@@ -1,6 +1,6 @@
 // lib.rs
 //
-// Copyright (c) 2021  Douglas P Lau
+// Copyright (c) 2021-2022  Douglas P Lau
 //
 #![doc = include_str!("../README.md")]
 #![warn(missing_docs)]
@@ -12,6 +12,6 @@ mod node;
 mod reader;
 mod writer;
 
-pub use geometry::{Geom, Geometry, Linestring, Point, Polygon};
+pub use geometry::{Geom, GisData, Linestring, Point, Polygon};
 pub use reader::RTree;
 pub use writer::BulkWriter;

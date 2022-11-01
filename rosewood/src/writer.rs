@@ -3,7 +3,7 @@
 // Copyright (c) 2021-2022  Douglas P Lau
 //
 use crate::node::{Entry, Node, Root, M_NODE};
-use crate::Geometry;
+use crate::GisData;
 use loam::{Id, Reader, Result, Writer};
 use pointy::Float;
 use serde::{de::DeserializeOwned, Serialize};
@@ -68,15 +68,15 @@ where
 ///
 /// The file is written in two steps:
 ///
-/// 1. All `Geometry` values, grouped by leaf node in order to reduce page
-///    faults when reading.
+/// 1. All `GisData` values, grouped by leaf node in order to reduce page faults
+///    when reading.
 /// 2. All `Node` values, in depth-first order, with the root appearing last.
 ///
 /// [OMT]: http://ceur-ws.org/Vol-74/files/FORUM_18.pdf
 pub struct BulkWriter<D, F, G>
 where
     F: Float + Serialize + DeserializeOwned,
-    G: Geometry<F, Data = D> + Serialize + DeserializeOwned,
+    G: GisData<F, Data = D> + Serialize + DeserializeOwned,
 {
     /// Path to file
     path: PathBuf,
@@ -87,12 +87,12 @@ where
     /// Reader for temporary file
     reader: Reader,
 
-    /// Geometry entries
+    /// GisData entries
     elems: Vec<Entry<F>>,
 
     /// Node entries
     ///
-    /// This is built during the first step (while writing `Geometry`), and
+    /// This is built during the first step (while writing `GisData`), and
     /// used during the second step to write out `Node` data
     nodes: Vec<NodeElem<F>>,
 
@@ -107,7 +107,7 @@ where
 impl<D, F, G> BulkWriter<D, F, G>
 where
     F: Float + Serialize + DeserializeOwned,
-    G: Geometry<F, Data = D> + Serialize + DeserializeOwned,
+    G: GisData<F, Data = D> + Serialize + DeserializeOwned,
 {
     /// Create a new bulk writer
     pub fn new<P>(path: P) -> Result<Self>

@@ -1,9 +1,9 @@
 // reader.rs
 //
-// Copyright (c) 2021  Douglas P Lau
+// Copyright (c) 2021-2022  Douglas P Lau
 //
 use crate::node::{Node, Root, M_NODE};
-use crate::Geometry;
+use crate::GisData;
 use loam::{Error, Id, Reader, Result};
 use pointy::{BBox, Float};
 use serde::de::DeserializeOwned;
@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 pub struct RTree<F, G>
 where
     F: Float + DeserializeOwned,
-    G: Geometry<F> + DeserializeOwned,
+    G: GisData<F> + DeserializeOwned,
 {
     /// Reader for file
     reader: Reader,
@@ -28,7 +28,7 @@ where
 struct RTreeQuery<'a, D, F, G>
 where
     F: Float + DeserializeOwned,
-    G: Geometry<F, Data = D> + DeserializeOwned,
+    G: GisData<F, Data = D> + DeserializeOwned,
 {
     /// RTree
     tree: &'a RTree<F, G>,
@@ -48,7 +48,7 @@ where
 impl<'a, D, F, G> Iterator for RTreeQuery<'a, D, F, G>
 where
     F: Float + DeserializeOwned,
-    G: Geometry<F, Data = D> + DeserializeOwned,
+    G: GisData<F, Data = D> + DeserializeOwned,
 {
     type Item = Result<G>;
 
@@ -83,7 +83,7 @@ where
 impl<'a, D, F, G> RTreeQuery<'a, D, F, G>
 where
     F: Float + DeserializeOwned,
-    G: Geometry<F, Data = D> + DeserializeOwned,
+    G: GisData<F, Data = D> + DeserializeOwned,
 {
     /// Create a new RTree query
     fn new(tree: &'a RTree<F, G>, bbox: BBox<F>) -> Self {
@@ -121,7 +121,7 @@ where
 impl<D, F, G> RTree<F, G>
 where
     F: Float + DeserializeOwned,
-    G: Geometry<F, Data = D> + DeserializeOwned,
+    G: GisData<F, Data = D> + DeserializeOwned,
 {
     /// Open an RTree for reading
     pub fn new<P>(path: P) -> Result<Self>

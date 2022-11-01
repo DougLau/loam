@@ -1,13 +1,13 @@
 // geometry.rs
 //
-// Copyright (c) 2021  Douglas P Lau
+// Copyright (c) 2021-2022  Douglas P Lau
 //
 use pointy::{BBox, Float, Pt};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 
-/// Geometry which can be stored in an RTree
-pub trait Geometry<F>
+/// GIS data which can be stored in an RTree
+pub trait GisData<F>
 where
     F: Float,
 {
@@ -84,7 +84,7 @@ where
     Polygon(Polygon<F, D>),
 }
 
-impl<F, D> Geometry<F> for Point<F, D>
+impl<F, D> GisData<F> for Point<F, D>
 where
     F: Float,
 {
@@ -123,7 +123,7 @@ where
     }
 }
 
-impl<F, D> Geometry<F> for Linestring<F, D>
+impl<F, D> GisData<F> for Linestring<F, D>
 where
     F: Float,
 {
@@ -166,7 +166,7 @@ where
     }
 }
 
-impl<F, D> Geometry<F> for Polygon<F, D>
+impl<F, D> GisData<F> for Polygon<F, D>
 where
     F: Float,
 {
@@ -259,7 +259,7 @@ where
         .map(|e| e.0)
 }
 
-impl<F, D> Geometry<F> for Geom<F, D>
+impl<F, D> GisData<F> for Geom<F, D>
 where
     F: Float,
 {
