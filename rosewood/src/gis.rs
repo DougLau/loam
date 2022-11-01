@@ -7,8 +7,8 @@ use pointy::{BBox, Float, Pt};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 
-/// GIS data which can be stored in an RTree
-pub trait GisData<F>
+/// GIS geometry which can be stored in an RTree
+pub trait Gis<F>
 where
     F: Float,
 {
@@ -85,7 +85,7 @@ where
     Polygon(Polygon<F, D>),
 }
 
-impl<F, D> GisData<F> for Point<F, D>
+impl<F, D> Gis<F> for Point<F, D>
 where
     F: Float,
 {
@@ -124,7 +124,7 @@ where
     }
 }
 
-impl<F, D> GisData<F> for Linestring<F, D>
+impl<F, D> Gis<F> for Linestring<F, D>
 where
     F: Float,
 {
@@ -167,7 +167,7 @@ where
     }
 }
 
-impl<F, D> GisData<F> for Polygon<F, D>
+impl<F, D> Gis<F> for Polygon<F, D>
 where
     F: Float,
 {
@@ -260,7 +260,7 @@ where
         .map(|e| e.0)
 }
 
-impl<F, D> GisData<F> for Geom<F, D>
+impl<F, D> Gis<F> for Geom<F, D>
 where
     F: Float,
 {

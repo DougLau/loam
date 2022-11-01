@@ -2,7 +2,7 @@
 //
 // Copyright (c) 2021-2022  Douglas P Lau
 //
-use crate::gis::GisData;
+use crate::gis::Gis;
 use crate::node::{Entry, Node, Root, M_NODE};
 use loam::{Id, Reader, Result, Writer};
 use pointy::Float;
@@ -68,7 +68,7 @@ where
 ///
 /// The file is written in two steps:
 ///
-/// 1. All `GisData` values, grouped by leaf node in order to reduce page faults
+/// 1. All `Gis` values, grouped by leaf node in order to reduce page faults
 ///    when reading.
 /// 2. All `Node` values, in depth-first order, with the root appearing last.
 ///
@@ -76,7 +76,7 @@ where
 pub struct BulkWriter<D, F, G>
 where
     F: Float + Serialize + DeserializeOwned,
-    G: GisData<F, Data = D> + Serialize + DeserializeOwned,
+    G: Gis<F, Data = D> + Serialize + DeserializeOwned,
 {
     /// Path to file
     path: PathBuf,
@@ -87,12 +87,12 @@ where
     /// Reader for temporary file
     reader: Reader,
 
-    /// GisData entries
+    /// Gis entries
     elems: Vec<Entry<F>>,
 
     /// Node entries
     ///
-    /// This is built during the first step (while writing `GisData`), and
+    /// This is built during the first step (while writing `Gis` entries), and
     /// used during the second step to write out `Node` data
     nodes: Vec<NodeElem<F>>,
 
@@ -107,7 +107,7 @@ where
 impl<D, F, G> BulkWriter<D, F, G>
 where
     F: Float + Serialize + DeserializeOwned,
-    G: GisData<F, Data = D> + Serialize + DeserializeOwned,
+    G: Gis<F, Data = D> + Serialize + DeserializeOwned,
 {
     /// Create a new bulk writer
     pub fn new<P>(path: P) -> Result<Self>
