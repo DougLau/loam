@@ -1,4 +1,4 @@
-use rosewood::{BulkWriter, Point};
+use rosewood::{gis::Point, BulkWriter};
 
 fn main() {
     let pts = random_points(100, 2);

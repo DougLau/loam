@@ -6,7 +6,7 @@ A file-based [RTree] for geospatial data, such as `Point`s, `Linestring`s and
 ### Writing
 
 ```rust
-use rosewood::{BulkWriter, Point};
+use rosewood::{BulkWriter, gis::Point};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut w = BulkWriter::new("points.loam")?;

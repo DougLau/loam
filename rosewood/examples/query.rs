@@ -1,5 +1,5 @@
 use pointy::BBox;
-use rosewood::{Point, RTree};
+use rosewood::{gis::Point, RTree};
 
 fn main() {
     let rtree = RTree::<f32, Point<f32, ()>>::new("points.loam").unwrap();
