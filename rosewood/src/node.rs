@@ -92,9 +92,13 @@ where
             .partial_cmp(&rhs.bbox.y_mid())
             .unwrap_or(Ordering::Equal)
     }
+}
 
-    /// Check if an entry intersects with a bounding box
-    pub fn intersects(&self, bbox: BBox<F>) -> bool {
+impl<F> Bounded<F> for &Entry<F>
+where
+    F: Float,
+{
+    fn bounded_by(self, bbox: BBox<F>) -> bool {
         self.id.is_valid() && self.bbox.bounded_by(bbox)
     }
 }

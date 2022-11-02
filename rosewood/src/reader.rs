@@ -5,7 +5,7 @@
 use crate::gis::Gis;
 use crate::node::{Node, Root, M_NODE};
 use loam::{Error, Id, Reader, Result};
-use pointy::{BBox, Float};
+use pointy::{BBox, Bounded, Float};
 use serde::de::DeserializeOwned;
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
@@ -62,7 +62,7 @@ where
                     Ok(node) => {
                         let children = node.into_entries();
                         for child in children {
-                            if child.intersects(self.bbox) {
+                            if child.bounded_by(self.bbox) {
                                 self.work.push((child.id(), height - 1));
                             }
                         }
@@ -98,7 +98,7 @@ where
                         let children = node.into_entries();
                         work.reserve(height * M_NODE);
                         for child in children {
-                            if child.intersects(bbox) {
+                            if child.bounded_by(bbox) {
                                 work.push((child.id(), height));
                             }
                         }

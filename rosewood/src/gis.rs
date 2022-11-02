@@ -26,7 +26,7 @@ where
 ///
 /// This geometry is one or more GIS points, along with associated data.
 #[derive(Clone, Debug, Default, Eq, PartialEq, Deserialize, Serialize)]
-pub struct Point<F, D>
+pub struct Points<F, D>
 where
     F: Float,
 {
@@ -37,19 +37,39 @@ where
     data: D,
 }
 
+/// Line string
+#[derive(Clone, Debug, Default, Eq, PartialEq, Deserialize, Serialize)]
+pub struct Linestring<F>
+where
+    F: Float,
+{
+    /// Points in line string
+    pts: Vec<Pt<F>>,
+}
+
 /// Line string geometry
 ///
 /// This geometry is one or more GIS line strings, along with associated data.
 #[derive(Clone, Debug, Default, Eq, PartialEq, Deserialize, Serialize)]
-pub struct Linestring<F, D>
+pub struct Linestrings<F, D>
 where
     F: Float,
 {
     /// Line strings in geometry
-    lines: Vec<Vec<Pt<F>>>,
+    lines: Vec<Linestring<F>>,
 
     /// Associated data
     data: D,
+}
+
+/// Polygon
+#[derive(Clone, Debug, Default, Eq, PartialEq, Deserialize, Serialize)]
+pub struct Polygon<F>
+where
+    F: Float,
+{
+    /// Points in polygon
+    pts: Vec<Pt<F>>,
 }
 
 /// Polygon geometry
@@ -58,12 +78,12 @@ where
 /// A polygon is a `Vec` of closed rings.  The winding order determines whether
 /// a ring is "outer" or "inner".
 #[derive(Clone, Debug, Default, Eq, PartialEq, Deserialize, Serialize)]
-pub struct Polygon<F, D>
+pub struct Polygons<F, D>
 where
     F: Float,
 {
     /// Polygons in geometry
-    rings: Vec<Vec<Pt<F>>>,
+    rings: Vec<Polygon<F>>,
 
     /// Associated data
     data: D,
@@ -76,16 +96,16 @@ where
     F: Float,
 {
     /// Point geometry
-    Point(Point<F, D>),
+    Point(Points<F, D>),
 
     /// Linestring geometry
-    Linestring(Linestring<F, D>),
+    Linestring(Linestrings<F, D>),
 
     /// Polygon geometry
-    Polygon(Polygon<F, D>),
+    Polygon(Polygons<F, D>),
 }
 
-impl<F, D> Gis<F> for Point<F, D>
+impl<F, D> Gis<F> for Points<F, D>
 where
     F: Float,
 {
@@ -100,11 +120,11 @@ where
     }
 }
 
-impl<F, D> Point<F, D>
+impl<F, D> Points<F, D>
 where
     F: Float,
 {
-    /// Create a new point geometry
+    /// Create new point geometry
     pub fn new(data: D) -> Self {
         let pts = vec![];
         Self { pts, data }
@@ -118,13 +138,33 @@ where
         self.pts.push(pt.into());
     }
 
-    /// Borrow points
-    pub fn as_points(&self) -> &[Pt<F>] {
-        &self.pts
+    /// Get point iterator
+    pub fn iter(&self) -> impl Iterator<Item = &Pt<F>> {
+        self.pts.iter()
     }
 }
 
-impl<F, D> Gis<F> for Linestring<F, D>
+impl<F> Linestring<F>
+where
+    F: Float,
+{
+    /// Create a new line string
+    fn new<I, P>(pts: I) -> Self
+    where
+        I: IntoIterator<Item = P>,
+        P: Into<Pt<F>>,
+    {
+        let pts = pts.into_iter().map(|pt| pt.into()).collect();
+        Linestring { pts }
+    }
+
+    /// Get point iterator
+    pub fn iter(&self) -> impl Iterator<Item = &Pt<F>> {
+        self.pts.iter()
+    }
+}
+
+impl<F, D> Gis<F> for Linestrings<F, D>
 where
     F: Float,
 {
@@ -132,7 +172,9 @@ where
 
     fn bbox(&self) -> BBox<F> {
         let mut bbox = BBox::default();
-        bbox.extend(self.lines.iter().flatten());
+        for line in self.lines.iter() {
+            bbox.extend(line.pts.iter());
+        }
         bbox
     }
 
@@ -141,11 +183,11 @@ where
     }
 }
 
-impl<F, D> Linestring<F, D>
+impl<F, D> Linestrings<F, D>
 where
     F: Float,
 {
-    /// Create a new line string geometry
+    /// Create new line string geometry
     pub fn new(data: D) -> Self {
         let lines = vec![];
         Self { lines, data }
@@ -157,17 +199,60 @@ where
         I: IntoIterator<Item = P>,
         P: Into<Pt<F>>,
     {
-        let pts = pts.into_iter().map(|pt| pt.into()).collect();
-        self.lines.push(pts);
+        self.lines.push(Linestring::new(pts));
     }
 
-    /// Borrow line strings
-    pub fn as_lines(&self) -> &[Vec<Pt<F>>] {
-        &self.lines
+    /// Get line string iterator
+    pub fn iter(&self) -> impl Iterator<Item = &Linestring<F>> {
+        self.lines.iter()
     }
 }
 
-impl<F, D> Gis<F> for Polygon<F, D>
+impl<F> Polygon<F>
+where
+    F: Float,
+{
+    /// Create a new polygon
+    fn new<I, P>(pts: I) -> Self
+    where
+        I: IntoIterator<Item = P>,
+        P: Into<Pt<F>>,
+    {
+        let pts = pts.into_iter().map(|pt| pt.into()).collect();
+        Polygon { pts }
+    }
+
+    /// Check if a polygon has clockwise winding order
+    fn is_clockwise(&self) -> bool {
+        if let Some(ext) = self.find_extreme_point() {
+            let len = self.pts.len();
+            let a = if ext > 0 { ext - 1 } else { len - 1 };
+            let b = if ext < len - 1 { ext + 1 } else { 0 };
+            // Make two vectors as edges pointing toward the extreme point
+            let v0 = self.pts[a] - self.pts[ext];
+            let v1 = self.pts[b] - self.pts[ext];
+            // Cross product determines the winding order
+            (v0 * v1) > F::zero()
+        } else {
+            false
+        }
+    }
+
+    /// Find an extreme point on the convex hull of a polygon
+    fn find_extreme_point(&self) -> Option<usize> {
+        self.pts
+            .iter()
+            .enumerate()
+            .min_by(|a, b| {
+                (a.1.x(), a.1.y())
+                    .partial_cmp(&(b.1.x(), b.1.y()))
+                    .unwrap_or(Ordering::Greater)
+            })
+            .map(|e| e.0)
+    }
+}
+
+impl<F, D> Gis<F> for Polygons<F, D>
 where
     F: Float,
 {
@@ -175,7 +260,9 @@ where
 
     fn bbox(&self) -> BBox<F> {
         let mut bbox = BBox::default();
-        bbox.extend(self.rings.iter().flatten());
+        for ring in &self.rings {
+            bbox.extend(ring.pts.iter());
+        }
         bbox
     }
 
@@ -184,11 +271,11 @@ where
     }
 }
 
-impl<F, D> Polygon<F, D>
+impl<F, D> Polygons<F, D>
 where
     F: Float,
 {
-    /// Create a new polygon geometry
+    /// Create new polygon geometry
     pub fn new(data: D) -> Self {
         let rings = vec![];
         Self { rings, data }
@@ -200,9 +287,9 @@ where
         I: IntoIterator<Item = P>,
         P: Into<Pt<F>>,
     {
-        let mut ring: Vec<_> = ring.into_iter().map(|pt| pt.into()).collect();
-        if !is_clockwise(&ring) {
-            ring.reverse();
+        let mut ring = Polygon::new(ring);
+        if !ring.is_clockwise() {
+            ring.pts.reverse();
         }
         self.rings.push(ring);
     }
@@ -213,51 +300,17 @@ where
         I: IntoIterator<Item = P>,
         P: Into<Pt<F>>,
     {
-        let mut ring: Vec<_> = ring.into_iter().map(|pt| pt.into()).collect();
-        if is_clockwise(&ring) {
-            ring.reverse();
+        let mut ring = Polygon::new(ring);
+        if ring.is_clockwise() {
+            ring.pts.reverse();
         }
         self.rings.push(ring);
     }
 
-    /// Borrow rings
-    pub fn as_rings(&self) -> &[Vec<Pt<F>>] {
-        &self.rings
+    /// Get polygon iterator
+    pub fn iter(&self) -> impl Iterator<Item = &Polygon<F>> {
+        self.rings.iter()
     }
-}
-
-/// Check if a ring of points has clockwise winding order
-fn is_clockwise<F>(ring: &[Pt<F>]) -> bool
-where
-    F: Float,
-{
-    if let Some(ext) = find_extreme_point(ring) {
-        let len = ring.len();
-        let a = if ext > 0 { ext - 1 } else { len - 1 };
-        let b = if ext < len - 1 { ext + 1 } else { 0 };
-        // Make two vectors as edges pointing toward the extreme point
-        let v0 = ring[a] - ring[ext];
-        let v1 = ring[b] - ring[ext];
-        // Cross product determines the winding order
-        (v0 * v1) > F::zero()
-    } else {
-        false
-    }
-}
-
-/// Find an extreme point on the convex hull of a polygon
-fn find_extreme_point<F>(ring: &[Pt<F>]) -> Option<usize>
-where
-    F: Float,
-{
-    ring.iter()
-        .enumerate()
-        .min_by(|a, b| {
-            (a.1.x(), a.1.y())
-                .partial_cmp(&(b.1.x(), b.1.y()))
-                .unwrap_or(Ordering::Greater)
-        })
-        .map(|e| e.0)
 }
 
 impl<F, D> Gis<F> for Geom<F, D>
@@ -289,9 +342,9 @@ mod test {
 
     #[test]
     fn clockwise() {
-        let ring = [(0.0, 0.0).into(), (1.0, 0.0).into(), (0.0, 1.0).into()];
-        assert_eq!(false, is_clockwise(&ring));
-        let ring = [(0.0, 0.0).into(), (0.0, 1.0).into(), (1.0, 0.0).into()];
-        assert_eq!(true, is_clockwise(&ring));
+        let ring = Polygon::new([(0.0, 0.0), (1.0, 0.0), (0.0, 1.0)]);
+        assert_eq!(false, ring.is_clockwise());
+        let ring = Polygon::new([(0.0, 0.0), (0.0, 1.0), (1.0, 0.0)]);
+        assert_eq!(true, ring.is_clockwise());
     }
 }
