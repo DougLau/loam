@@ -279,8 +279,8 @@ where
             .iter()
             .enumerate()
             .min_by(|a, b| {
-                (a.1.x(), a.1.y())
-                    .partial_cmp(&(b.1.x(), b.1.y()))
+                (a.1.x, a.1.y)
+                    .partial_cmp(&(b.1.x, b.1.y))
                     .unwrap_or(Ordering::Greater)
             })
             .map(|e| e.0)
