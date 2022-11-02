@@ -3,7 +3,7 @@
 // Copyright (c) 2021-2022  Douglas P Lau
 //
 //! Data types for GIS
-use pointy::{BBox, Float, Pt};
+use pointy::{BBox, Float, Pt, Seg};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 
@@ -45,6 +45,35 @@ where
 {
     /// Points in line string
     pts: Vec<Pt<F>>,
+}
+
+/// Segment iterator for Linestring
+struct SegIter<'a, F>
+where
+    F: Float,
+{
+    /// Point iterator
+    iter: std::slice::Iter<'a, Pt<F>>,
+
+    /// Previous point
+    ppt: Option<Pt<F>>,
+}
+
+impl<'a, F> Iterator for SegIter<'a, F>
+where
+    F: Float,
+{
+    type Item = Seg<F>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.ppt.is_none() {
+            self.ppt = Some(*self.iter.next()?);
+        }
+        let ppt = self.ppt?;
+        let pt = self.iter.next();
+        self.ppt = pt.copied();
+        pt.map(|p| Seg::new(ppt, p))
+    }
 }
 
 /// Line string geometry
@@ -161,6 +190,12 @@ where
     /// Get point iterator
     pub fn iter(&self) -> impl Iterator<Item = &Pt<F>> {
         self.pts.iter()
+    }
+
+    /// Get line segment iterator
+    pub fn segments(&self) -> impl Iterator<Item = Seg<F>> + '_ {
+        let iter = self.pts.iter();
+        SegIter { iter, ppt: None }
     }
 }
 
