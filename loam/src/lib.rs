@@ -1,10 +1,9 @@
 // lib.rs      loam crate.
 //
-// Copyright (c) 2021  Douglas P Lau
+// Copyright (c) 2021-2022  Douglas P Lau
 //
 #![doc = include_str!("../README.md")]
 #![warn(missing_docs)]
-#![warn(rustdoc::missing_doc_code_examples)]
 
 mod common;
 mod reader;

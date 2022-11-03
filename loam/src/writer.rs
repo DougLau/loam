@@ -1,6 +1,6 @@
 // writer.rs      Writer module.
 //
-// Copyright (c) 2021  Douglas P Lau
+// Copyright (c) 2021-2022  Douglas P Lau
 //
 use crate::common::{checksum, Error, Id, Result, CRC_SZ, HEADER};
 use bincode::Options;
@@ -55,7 +55,7 @@ impl Writer {
         options.serialize_into(&mut buf, &len)?;
         options.serialize_into(&mut buf, &data)?;
         if let Some(checksum) = checksum(&buf) {
-            buf.extend(&checksum.to_le_bytes());
+            buf.extend(checksum.to_le_bytes());
         }
         self.file.write_all(&buf)?;
         Ok(id)
