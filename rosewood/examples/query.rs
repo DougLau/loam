@@ -10,7 +10,7 @@ fn main() {
     let mut n = 0;
     for point in rtree.query(bbox) {
         for pt in point.unwrap().iter() {
-            println!("x: {}, y: {}", pt.x(), pt.y());
+            println!("x: {}, y: {}", pt.x, pt.y);
         }
         n += 1;
     }

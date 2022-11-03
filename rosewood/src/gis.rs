@@ -208,7 +208,7 @@ where
     fn bbox(&self) -> BBox<F> {
         let mut bbox = BBox::default();
         for line in self.lines.iter() {
-            bbox.extend(line.pts.iter());
+            bbox.extend(line.iter());
         }
         bbox
     }
@@ -285,6 +285,17 @@ where
             })
             .map(|e| e.0)
     }
+
+    /// Get point iterator
+    pub fn iter(&self) -> impl Iterator<Item = &Pt<F>> {
+        self.pts.iter()
+    }
+
+    /// Get line segment iterator
+    pub fn segments(&self) -> impl Iterator<Item = Seg<F>> + '_ {
+        let iter = self.pts.iter();
+        SegIter { iter, ppt: None }
+    }
 }
 
 impl<F, D> Gis<F> for Polygons<F, D>
@@ -296,7 +307,7 @@ where
     fn bbox(&self) -> BBox<F> {
         let mut bbox = BBox::default();
         for ring in &self.rings {
-            bbox.extend(ring.pts.iter());
+            bbox.extend(ring.iter());
         }
         bbox
     }
