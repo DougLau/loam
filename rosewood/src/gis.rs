@@ -3,7 +3,7 @@
 // Copyright (c) 2021-2022  Douglas P Lau
 //
 //! Data types for GIS
-use pointy::{BBox, Float, Pt, Seg};
+use pointy::{BBox, Bounded, Float, Pt, Seg};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 
@@ -173,6 +173,15 @@ where
     }
 }
 
+impl<F> Bounded<F> for &Linestring<F>
+where
+    F: Float,
+{
+    fn bounded_by(self, bbox: BBox<F>) -> bool {
+        self.segments().any(|seg| seg.bounded_by(bbox))
+    }
+}
+
 impl<F> Linestring<F>
 where
     F: Float,
@@ -215,6 +224,15 @@ where
 
     fn data(&self) -> &Self::Data {
         &self.data
+    }
+}
+
+impl<F, D> Bounded<F> for &Linestrings<F, D>
+where
+    F: Float,
+{
+    fn bounded_by(self, bbox: BBox<F>) -> bool {
+        self.iter().any(|lines| lines.bounded_by(bbox))
     }
 }
 
