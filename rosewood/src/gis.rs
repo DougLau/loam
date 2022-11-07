@@ -3,7 +3,7 @@
 // Copyright (c) 2021-2022  Douglas P Lau
 //
 //! Data types for GIS
-use pointy::{BBox, Bounded, Float, Pt, Seg};
+use pointy::{BBox, Bounded, Bounds, Float, Pt, Seg};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 
@@ -261,6 +261,86 @@ where
     }
 }
 
+/// Border around bounding box
+///
+/// The border is eight regions around the box, including the 4 cardinal and 4
+/// ordinal directions.
+#[derive(Clone, Debug, Default)]
+struct BoundBorder {
+    below: bool,
+    below_left: bool,
+    left: bool,
+    above_left: bool,
+    above: bool,
+    above_right: bool,
+    right: bool,
+    below_right: bool,
+}
+
+impl BoundBorder {
+    /// Add bounds to border
+    fn add_bounds(&mut self, b: Bounds) -> bool {
+        match b {
+            Bounds::Below => self.below = true,
+            Bounds::BelowLeft => self.below_left = true,
+            Bounds::Left => self.left = true,
+            Bounds::AboveLeft => self.above_left = true,
+            Bounds::Above => self.above = true,
+            Bounds::AboveRight => self.above_right = true,
+            Bounds::Right => self.right = true,
+            Bounds::BelowRight => self.below_right = true,
+            Bounds::Within => return true,
+        }
+        false
+    }
+
+    /// Check if border is surrounding bounds
+    ///
+    /// If there are no gaps of 3 or more cardinal/ordinal directions, the shape
+    /// is surrounding the box.  This can trigger false positives, but is much
+    /// simpler than the "correct" algorithm.
+    fn is_surrounding(&self) -> bool {
+        if !(self.below | self.below_left | self.left) {
+            return false;
+        }
+        if !(self.below_left | self.left | self.above_left) {
+            return false;
+        }
+        if !(self.left | self.above_left | self.above) {
+            return false;
+        }
+        if !(self.above_left | self.above | self.above_right) {
+            return false;
+        }
+        if !(self.above | self.above_right | self.right) {
+            return false;
+        }
+        if !(self.above_right | self.right | self.below_right) {
+            return false;
+        }
+        if !(self.right | self.below_right | self.below) {
+            return false;
+        }
+        if !(self.below_right | self.below | self.below_left) {
+            return false;
+        }
+        true
+    }
+}
+
+impl<F> Bounded<F> for &Polygon<F>
+where
+    F: Float,
+{
+    fn bounded_by(self, bbox: BBox<F>) -> bool {
+        let mut border = BoundBorder::default();
+        self.segments().any(|seg| {
+            seg.bounded_by(bbox)
+                || border.add_bounds(bbox.check(seg.p0.x, seg.p0.y))
+        }) || border.is_surrounding()
+    }
+}
+
 impl<F> Polygon<F>
 where
     F: Float,
@@ -332,6 +412,15 @@ where
 
     fn data(&self) -> &Self::Data {
         &self.data
+    }
+}
+
+impl<F, D> Bounded<F> for &Polygons<F, D>
+where
+    F: Float,
+{
+    fn bounded_by(self, bbox: BBox<F>) -> bool {
+        self.iter().any(|poly| poly.bounded_by(bbox))
     }
 }
 
