@@ -1,6 +1,6 @@
 // reader.rs
 //
-// Copyright (c) 2021-2022  Douglas P Lau
+// Copyright (c) 2021-2023  Douglas P Lau
 //
 use crate::gis::Gis;
 use crate::node::{Node, Root, M_NODE};
@@ -131,7 +131,7 @@ where
         let mut tmp = PathBuf::new();
         tmp.push(path);
         let path = tmp;
-        let reader = Reader::new(&path)?;
+        let reader = Reader::new(path)?;
         Ok(Self {
             reader,
             _float: PhantomData,

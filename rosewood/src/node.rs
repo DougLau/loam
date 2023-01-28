@@ -1,6 +1,6 @@
 // node.rs
 //
-// Copyright (c) 2021-2022  Douglas P Lau
+// Copyright (c) 2021-2023  Douglas P Lau
 //
 use loam::Id;
 use pointy::{BBox, Bounded, Float, Pt};
@@ -150,7 +150,7 @@ where
                 return;
             }
         }
-        panic!("Too many children: {:?}", id);
+        panic!("Too many children: {id:?}");
     }
 
     /// Get the bounding box
