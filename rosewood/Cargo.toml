@@ -12,7 +12,7 @@ edition = "2021"
 [dependencies]
 loam = { version = "0.1", path = "../loam" }
 log = "0.4"
-pointy = { version = "0.3", features = ["serde"] }
+pointy = { version = "0.4", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "1"
 

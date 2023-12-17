@@ -1,2 +1,3 @@
 [workspace]
 members = ["loam", "rosewood"]
+resolver = "2"
