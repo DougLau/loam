@@ -1,6 +1,6 @@
 // geometry.rs
 //
-// Copyright (c) 2021-2022  Douglas P Lau
+// Copyright (c) 2021-2023  Douglas P Lau
 //
 //! Data types for GIS
 use pointy::{BBox, Bounded, Bounds, Float, Pt, Seg};
@@ -265,7 +265,7 @@ where
 ///
 /// The border is eight regions around the box, including the 4 cardinal and 4
 /// ordinal directions.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default)]
 struct BoundBorder {
     below: bool,
     below_left: bool,
