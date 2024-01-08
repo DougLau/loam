@@ -164,6 +164,7 @@ where
         bbox
     }
 
+    /// Get slice of child entries
     pub fn into_entries(self) -> [Entry<F>; M_NODE] {
         self.children
     }

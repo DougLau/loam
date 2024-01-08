@@ -62,6 +62,7 @@ where
                     Ok(node) => {
                         let children = node.into_entries();
                         for child in children {
+                            log::trace!("{height}: {:?}", child.bbox());
                             if child.bounded_by(self.bbox) {
                                 self.work.push((child.id(), height - 1));
                             }
@@ -94,11 +95,14 @@ where
                 match tree.reader.lookup::<Root<F>>(id) {
                     Ok(root) => {
                         let height = Node::<F>::height(root.n_elem());
+                        log::trace!("root: {height}");
                         let node = root.into_node();
                         let children = node.into_entries();
                         work.reserve(height * M_NODE);
                         for child in children {
+                            log::debug!("bbox: {bbox:?}");
                             if child.bounded_by(bbox) {
+                                log::debug!("child: {:?}", child.bbox());
                                 work.push((child.id(), height));
                             }
                         }
