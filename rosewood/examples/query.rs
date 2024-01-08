@@ -1,6 +1,10 @@
 use pointy::{BBox, Bounded};
-use rosewood::{gis::{Points, Polygons}, RTree};
+use rosewood::{
+    gis::{Points, Polygons},
+    RTree,
+};
 
+#[allow(dead_code)]
 fn points() {
     let rtree = RTree::<f32, Points<f32, ()>>::new("points.loam").unwrap();
     let bbox = BBox::new([(0.0_f32, 0.0), (0.5, 0.5)]);
@@ -16,6 +20,7 @@ fn points() {
     println!("found: {n}");
 }
 
+#[allow(dead_code)]
 fn polygons() {
     let rtree = RTree::<f32, Polygons<f32, ()>>::new("polygons.loam").unwrap();
     let bbox = BBox::new([(0.0_f32, 0.0), (0.5, 0.5)]);
