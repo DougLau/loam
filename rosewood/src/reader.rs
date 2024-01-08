@@ -1,6 +1,6 @@
 // reader.rs
 //
-// Copyright (c) 2021-2023  Douglas P Lau
+// Copyright (c) 2021-2024  Douglas P Lau
 //
 use crate::gis::Gis;
 use crate::node::{Node, Root, M_NODE};
@@ -88,7 +88,7 @@ where
 {
     /// Create a new RTree query
     fn new(tree: &'a RTree<F, G>, bbox: BBox<F>) -> Self {
-        let mut work = vec![];
+        let mut work = Vec::new();
         let mut error = None;
         match tree.reader.root() {
             Ok(id) => {

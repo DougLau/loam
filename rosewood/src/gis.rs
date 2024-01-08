@@ -1,6 +1,6 @@
 // geometry.rs
 //
-// Copyright (c) 2021-2023  Douglas P Lau
+// Copyright (c) 2021-2024  Douglas P Lau
 //
 //! Data types for GIS
 use pointy::{BBox, Bounded, Bounds, Float, Pt, Seg};
@@ -155,7 +155,7 @@ where
 {
     /// Create new point geometry
     pub fn new(data: D) -> Self {
-        let pts = vec![];
+        let pts = Vec::new();
         Self { pts, data }
     }
 
@@ -242,7 +242,7 @@ where
 {
     /// Create new line string geometry
     pub fn new(data: D) -> Self {
-        let lines = vec![];
+        let lines = Vec::new();
         Self { lines, data }
     }
 
@@ -430,7 +430,7 @@ where
 {
     /// Create new polygon geometry
     pub fn new(data: D) -> Self {
-        let rings = vec![];
+        let rings = Vec::new();
         Self { rings, data }
     }
 

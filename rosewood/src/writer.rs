@@ -1,6 +1,6 @@
 // writer.rs
 //
-// Copyright (c) 2021-2022  Douglas P Lau
+// Copyright (c) 2021-2024  Douglas P Lau
 //
 use crate::gis::Gis;
 use crate::node::{Entry, Node, Root, M_NODE};
@@ -124,8 +124,8 @@ where
             path,
             writer,
             reader,
-            elems: vec![],
-            nodes: vec![],
+            elems: Vec::new(),
+            nodes: Vec::new(),
             odd_axis: Axis::X,
             _data: PhantomData,
             _float: PhantomData,
@@ -190,7 +190,7 @@ where
                 n_group,
                 v_group
             );
-            let mut children = vec![];
+            let mut children = Vec::with_capacity(M_NODE);
             for v_chunk in elems.chunks_mut(n_group) {
                 v_chunk.sort_unstable_by(Entry::compare_y);
                 let n_chunk =
@@ -225,7 +225,7 @@ where
                 Axis::X => elems.sort_unstable_by(Entry::compare_x),
                 Axis::Y => elems.sort_unstable_by(Entry::compare_y),
             }
-            let mut children = vec![];
+            let mut children = Vec::with_capacity(M_NODE);
             let n_group = Node::<F>::partition_sz(height);
             for chunk in elems.chunks_mut(n_group) {
                 let child = self.build_subtree(height - 1, chunk)?;
@@ -253,8 +253,8 @@ where
     /// Write out all nodes
     fn write_nodes(&mut self, n_elems: usize) -> Result<Id> {
         assert!(n_elems > 0);
-        let mut node_entries = vec![];
         let n_nodes = self.nodes.len();
+        let mut node_entries = Vec::with_capacity(n_nodes);
         for ne in &self.nodes[..n_nodes - 1] {
             let node = ne.lookup(&node_entries);
             let id = self.writer.push(&node)?;
