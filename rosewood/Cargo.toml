@@ -17,4 +17,4 @@ serde = { version = "1.0", features = ["derive"] }
 thiserror = "1"
 
 [dev-dependencies]
-fastrand = "1.5"
+fastrand = "2.0"
