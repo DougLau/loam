@@ -100,9 +100,9 @@ where
                         let children = node.into_entries();
                         work.reserve(height * M_NODE);
                         for child in children {
-                            log::debug!("bbox: {bbox:?}");
+                            log::trace!("query: {bbox:?}");
                             if child.bounded_by(bbox) {
-                                log::debug!("child: {:?}", child.bbox());
+                                log::trace!("child: {:?}", child.bbox());
                                 work.push((child.id(), height));
                             }
                         }
