@@ -12,6 +12,9 @@ use std::path::{Path, PathBuf};
 
 /// RTree reader
 ///
+/// Reads a `.loam` file containing [Gis] data.
+///
+/// [Gis]: gis/trait.Gis.html
 pub struct RTree<F, G>
 where
     F: Float + DeserializeOwned,
@@ -127,7 +130,7 @@ where
     F: Float + DeserializeOwned,
     G: Gis<F, Data = D> + DeserializeOwned,
 {
-    /// Open an RTree for reading
+    /// Open an RTree `.loam` file for reading
     pub fn new<P>(path: P) -> Result<Self>
     where
         P: AsRef<Path>,
@@ -144,6 +147,10 @@ where
     }
 
     /// Query a bounding box
+    ///
+    /// Returns an iterator of all [Gis] items within the bounds.
+    ///
+    /// [Gis]: gis/trait.Gis.html
     pub fn query<'a>(
         &'a self,
         bbox: BBox<F>,
