@@ -143,6 +143,12 @@ where
 
     /// Build RTree from pushed items
     pub fn finish(mut self) -> Result<()> {
+        let mut elems = std::mem::take(&mut self.elems);
+        if elems.is_empty() {
+            // no items were pushed
+            self.cancel()?;
+            return Err(loam::Error::InvalidCheckpoint);
+        }
         // finish writing to the temp file
         self.writer.checkpoint(Id::new(0))?;
         // open another file for the real tree
@@ -153,7 +159,6 @@ where
         // reopen the temp file for reading
         tmp.set_extension("tmp");
         self.reader = Reader::new(&tmp)?;
-        let mut elems = std::mem::take(&mut self.elems);
         self.build_tree(&mut elems)?;
         let id = self.write_nodes(elems.len())?;
         self.writer.checkpoint(id)?;
