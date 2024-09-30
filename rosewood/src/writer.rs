@@ -7,6 +7,7 @@ use crate::node::{Entry, Node, Root, M_NODE};
 use loam::{Id, Reader, Result, Writer};
 use pointy::Float;
 use serde::{de::DeserializeOwned, Serialize};
+use std::io::ErrorKind;
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 
@@ -104,6 +105,17 @@ where
     _geom: PhantomData<G>,
 }
 
+/// Make a loam writer, overwriting file if it exists
+fn make_writer(path: &Path) -> Result<Writer> {
+    match Writer::new(path) {
+        Err(loam::Error::Io(e)) if e.kind() == ErrorKind::AlreadyExists => {
+            std::fs::remove_file(path)?;
+            Writer::new(path)
+        }
+        w => w,
+    }
+}
+
 impl<D, F, G> BulkWriter<D, F, G>
 where
     F: Float + Serialize + DeserializeOwned,
@@ -118,7 +130,7 @@ where
         tmp.push(path);
         let path = tmp.clone();
         tmp.set_extension("tmp");
-        let writer = Writer::new(&tmp)?;
+        let writer = make_writer(&tmp)?;
         let reader = Reader::new_empty()?;
         Ok(Self {
             path,
