@@ -1,9 +1,9 @@
 use rosewood::{gis::Polygons, BulkWriter};
 
 fn main() {
-    let pts = random_polygons(100, 2);
+    let polys = random_polygons(100, 2);
     let mut writer = BulkWriter::new("polygons.loam").unwrap();
-    writer.push(&pts).unwrap();
+    writer.push(&polys).unwrap();
     writer.finish().unwrap();
 }
 
