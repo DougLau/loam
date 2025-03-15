@@ -1,4 +1,4 @@
-use rosewood::{gis::Polygons, BulkWriter};
+use rosewood::{BulkWriter, gis::Polygons};
 
 fn main() {
     let polys = random_polygons(100, 2);

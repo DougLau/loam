@@ -1,7 +1,7 @@
 use pointy::{BBox, Bounded};
 use rosewood::{
-    gis::{Points, Polygons},
     RTree,
+    gis::{Points, Polygons},
 };
 
 #[allow(dead_code)]

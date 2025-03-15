@@ -1,8 +1,8 @@
 // writer.rs      Writer module.
 //
-// Copyright (c) 2021-2022  Douglas P Lau
+// Copyright (c) 2021-2025  Douglas P Lau
 //
-use crate::common::{checksum, Error, Id, Result, CRC_SZ, HEADER};
+use crate::common::{CRC_SZ, Error, HEADER, Id, Result, checksum};
 use bincode::Options;
 use serde::Serialize;
 use std::fs::{File, OpenOptions};

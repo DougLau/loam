@@ -1,13 +1,13 @@
 [package]
 name = "loam"
-version = "0.3.3"
+version = "0.4.0"
 description = "File-based tree storage"
 license = "MIT OR Apache-2.0"
 documentation = "https://docs.rs/loam"
 repository = "https://github.com/DougLau/loam/loam"
 readme = "README.md"
 keywords = ["database", "search"]
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 bincode = "1.3"

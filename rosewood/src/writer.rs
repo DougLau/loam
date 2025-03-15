@@ -1,12 +1,12 @@
 // writer.rs
 //
-// Copyright (c) 2021-2024  Douglas P Lau
+// Copyright (c) 2021-2025  Douglas P Lau
 //
 use crate::gis::Gis;
-use crate::node::{Entry, Node, Root, M_NODE};
+use crate::node::{Entry, M_NODE, Node, Root};
 use loam::{Id, Reader, Result, Writer};
 use pointy::Float;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 use std::io::ErrorKind;
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};

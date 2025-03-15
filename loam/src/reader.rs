@@ -1,8 +1,8 @@
 // reader.rs    Reader module.
 //
-// Copyright (c) 2021  Douglas P Lau
+// Copyright (c) 2021-2025  Douglas P Lau
 //
-use crate::common::{Error, Id, Result, CRC_SZ, HEADER};
+use crate::common::{CRC_SZ, Error, HEADER, Id, Result};
 use bincode::Options;
 use memmap2::{Mmap, MmapMut};
 use serde::de::DeserializeOwned;

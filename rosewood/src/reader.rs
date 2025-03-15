@@ -1,9 +1,9 @@
 // reader.rs
 //
-// Copyright (c) 2021-2024  Douglas P Lau
+// Copyright (c) 2021-2025  Douglas P Lau
 //
 use crate::gis::Gis;
-use crate::node::{Node, Root, M_NODE};
+use crate::node::{M_NODE, Node, Root};
 use loam::{Error, Id, Reader, Result};
 use pointy::{BBox, Bounded, Float};
 use serde::de::DeserializeOwned;
@@ -48,7 +48,7 @@ where
     _data: PhantomData<D>,
 }
 
-impl<'a, D, F, G> Iterator for RTreeQuery<'a, D, F, G>
+impl<D, F, G> Iterator for RTreeQuery<'_, D, F, G>
 where
     F: Float + DeserializeOwned,
     G: Gis<F, Data = D> + DeserializeOwned,

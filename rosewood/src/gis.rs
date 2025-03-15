@@ -1,6 +1,6 @@
 // geometry.rs
 //
-// Copyright (c) 2021-2024  Douglas P Lau
+// Copyright (c) 2021-2025  Douglas P Lau
 //
 //! Data types for GIS
 use pointy::{BBox, Bounded, Bounds, Float, Pt, Seg};
@@ -59,7 +59,7 @@ where
     ppt: Option<Pt<F>>,
 }
 
-impl<'a, F> Iterator for SegIter<'a, F>
+impl<F> Iterator for SegIter<'_, F>
 where
     F: Float,
 {
