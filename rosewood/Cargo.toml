@@ -6,6 +6,7 @@ license = "MIT OR Apache-2.0"
 documentation = "https://docs.rs/rosewood"
 repository = "https://github.com/DougLau/loam/rosewood"
 readme = "README.md"
+categories = ["science::geo"]
 keywords = ["geo", "spatial"]
 edition = "2024"
 
@@ -14,7 +15,7 @@ loam = { version = "0.4", path = "../loam" }
 log = "0.4"
 pointy = { version = "0.7", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
-thiserror = "2"
+thiserror = "2.0.12"
 
 [dev-dependencies]
 fastrand = "2.0"
