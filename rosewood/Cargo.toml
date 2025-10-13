@@ -1,6 +1,6 @@
 [package]
 name = "rosewood"
-version = "0.4.0"
+version = "0.5.0"
 description = "A file-based RTree for geospatial data"
 license = "MIT OR Apache-2.0"
 documentation = "https://docs.rs/rosewood"
@@ -11,11 +11,11 @@ keywords = ["geo", "spatial"]
 edition = "2024"
 
 [dependencies]
-loam = { version = "0.4", path = "../loam" }
+loam = { version = "0.5", path = "../loam" }
 log = "0.4"
 pointy = { version = "0.7", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
-thiserror = "2.0.12"
+thiserror = "2.0.17"
 
 [dev-dependencies]
 fastrand = "2.0"
