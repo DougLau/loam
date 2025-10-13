@@ -20,21 +20,21 @@ where
     F: Float + DeserializeOwned,
     G: Gis<F> + DeserializeOwned,
 {
-    /// Reader for file
-    reader: Reader,
+    /// Path for file
+    path: PathBuf,
 
     _float: PhantomData<F>,
     _geom: PhantomData<G>,
 }
 
 /// Query iterator for RTree
-struct RTreeQuery<'a, D, F, G>
+struct RTreeQuery<D, F, G>
 where
     F: Float + DeserializeOwned,
     G: Gis<F, Data = D> + DeserializeOwned,
 {
-    /// RTree
-    tree: &'a RTree<F, G>,
+    /// RTree reader
+    reader: Option<Reader>,
 
     /// Query bounding box
     bbox: BBox<F>,
@@ -46,9 +46,10 @@ where
     error: Option<Error>,
 
     _data: PhantomData<D>,
+    _geom: PhantomData<G>,
 }
 
-impl<D, F, G> Iterator for RTreeQuery<'_, D, F, G>
+impl<D, F, G> Iterator for RTreeQuery<D, F, G>
 where
     F: Float + DeserializeOwned,
     G: Gis<F, Data = D> + DeserializeOwned,
@@ -59,9 +60,10 @@ where
         if let Some(err) = self.error.take() {
             return Some(Err(err));
         }
+        let reader = self.reader.as_ref()?;
         while let Some((id, height)) = self.work.pop() {
             if height > 1 {
-                match self.tree.reader.lookup::<Node<F>>(id) {
+                match reader.lookup::<Node<F>>(id) {
                     Ok(node) => {
                         let children = node.into_entries();
                         for child in children {
@@ -74,7 +76,7 @@ where
                     Err(e) => return Some(Err(e)),
                 }
             } else {
-                match self.tree.reader.lookup::<G>(id) {
+                match reader.lookup::<G>(id) {
                     Ok(geom) => return Some(Ok(geom)),
                     Err(e) => return Some(Err(e)),
                 }
@@ -84,44 +86,52 @@ where
     }
 }
 
-impl<'a, D, F, G> RTreeQuery<'a, D, F, G>
+impl<D, F, G> RTreeQuery<D, F, G>
 where
     F: Float + DeserializeOwned,
     G: Gis<F, Data = D> + DeserializeOwned,
 {
     /// Create a new RTree query
-    fn new(tree: &'a RTree<F, G>, bbox: BBox<F>) -> Self {
-        let mut work = Vec::new();
-        let mut error = None;
-        match tree.reader.root() {
-            Ok(id) => {
-                match tree.reader.lookup::<Root<F>>(id) {
-                    Ok(root) => {
-                        let height = Node::<F>::height(root.n_elem());
-                        log::trace!("root: {height}");
-                        let node = root.into_node();
-                        let children = node.into_entries();
-                        work.reserve(height * M_NODE);
-                        for child in children {
-                            log::trace!("query: {bbox:?}");
-                            if child.bounded_by(bbox) {
-                                log::trace!("child: {:?}", child.bbox());
-                                work.push((child.id(), height));
-                            }
-                        }
-                    }
-                    Err(e) => error = Some(e),
-                };
-            }
-            Err(e) => error = Some(e),
+    fn new(tree: &RTree<F, G>, bbox: BBox<F>) -> Self {
+        match Self::build(tree.path.as_path(), bbox) {
+            Ok(query) => query,
+            Err(e) => Self {
+                reader: None,
+                bbox,
+                work: Vec::new(),
+                error: Some(e),
+                _data: PhantomData,
+                _geom: PhantomData,
+            },
         }
-        Self {
-            tree,
+    }
+
+    /// Build query
+    fn build(path: &Path, bbox: BBox<F>) -> Result<Self> {
+        let mut work = Vec::new();
+        let reader = Reader::new(path)?;
+        let id = reader.root()?;
+        let root = reader.lookup::<Root<F>>(id)?;
+        let height = Node::<F>::height(root.n_elem());
+        log::trace!("root: {height}");
+        let node = root.into_node();
+        let children = node.into_entries();
+        work.reserve(height * M_NODE);
+        for child in children {
+            log::trace!("query: {bbox:?}");
+            if child.bounded_by(bbox) {
+                log::trace!("child: {:?}", child.bbox());
+                work.push((child.id(), height));
+            }
+        }
+        Ok(Self {
+            reader: Some(reader),
             bbox,
             work,
-            error,
+            error: None,
             _data: PhantomData,
-        }
+            _geom: PhantomData,
+        })
     }
 }
 
@@ -131,19 +141,18 @@ where
     G: Gis<F, Data = D> + DeserializeOwned,
 {
     /// Open an RTree `.loam` file for reading
-    pub fn new<P>(path: P) -> Result<Self>
+    pub fn new<P>(path: P) -> Self
     where
         P: AsRef<Path>,
     {
         let mut tmp = PathBuf::new();
         tmp.push(path);
         let path = tmp;
-        let reader = Reader::new(path)?;
-        Ok(Self {
-            reader,
+        Self {
+            path,
             _float: PhantomData,
             _geom: PhantomData,
-        })
+        }
     }
 
     /// Query a bounding box

@@ -5,7 +5,7 @@ A file-based [RTree] for geospatial data, such as `Point`s, `Linestring`s and
 
 ### Writing
 
-```rust
+```rust,no_run
 use rosewood::{BulkWriter, gis::Points};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

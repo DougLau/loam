@@ -6,7 +6,7 @@ use rosewood::{
 
 #[allow(dead_code)]
 fn points() {
-    let rtree = RTree::<f32, Points<f32, ()>>::new("points.loam").unwrap();
+    let rtree = RTree::<f32, Points<f32, ()>>::new("points.loam");
     let bbox = BBox::new([(0.0_f32, 0.0), (0.5, 0.5)]);
     let mut n = 0;
     for points in rtree.query(bbox) {
@@ -22,7 +22,7 @@ fn points() {
 
 #[allow(dead_code)]
 fn polygons() {
-    let rtree = RTree::<f32, Polygons<f32, ()>>::new("polygons.loam").unwrap();
+    let rtree = RTree::<f32, Polygons<f32, ()>>::new("polygons.loam");
     let bbox = BBox::new([(0.0_f32, 0.0), (0.5, 0.5)]);
     let mut n = 0;
     for polygons in rtree.query(bbox) {
