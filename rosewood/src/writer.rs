@@ -20,7 +20,7 @@ enum Axis {
 
 impl Axis {
     fn with_height(self, height: usize) -> Self {
-        if height % 2 != 0 {
+        if !height.is_multiple_of(2) {
             self
         } else {
             match self {
