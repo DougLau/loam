@@ -1,6 +1,6 @@
 // geometry.rs
 //
-// Copyright (c) 2021-2025  Douglas P Lau
+// Copyright (c) 2021-2026  Douglas P Lau
 //
 //! Data types for GIS
 use pointy::{BBox, Bounded, Bounds, Float, Pt, Seg};
@@ -146,6 +146,15 @@ where
 
     fn data(&self) -> &Self::Data {
         &self.data
+    }
+}
+
+impl<F, D> Bounded<F> for &Points<F, D>
+where
+    F: Float,
+{
+    fn bounded_by(self, bbox: BBox<F>) -> bool {
+        self.iter().any(|pt| pt.bounded_by(bbox))
     }
 }
 
