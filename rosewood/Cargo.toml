@@ -1,6 +1,5 @@
 [package]
 name = "rosewood"
-version = "0.6.0"
 description = "A file-based RTree for geospatial data"
 license = "MIT OR Apache-2.0"
 documentation = "https://docs.rs/rosewood"
@@ -8,7 +7,8 @@ repository = "https://github.com/DougLau/loam/rosewood"
 readme = "README.md"
 categories = ["science::geo"]
 keywords = ["geo", "spatial"]
-edition = "2024"
+edition.workspace = true
+version.workspace = true
 
 [dependencies]
 loam = { version = "0.6", path = "../loam" }
